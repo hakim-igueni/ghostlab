@@ -7,6 +7,7 @@ public class Game {
     private int nbPlayersWhoSentSTART = 0;
     private HashMap<String, Player> players = new HashMap<String, Player>();
     private boolean started = false;
+    private Labyrinth labyrinth;
 
     public Game(int id) {
         this.id = id;
@@ -48,4 +49,7 @@ public class Game {
         return players.size();
     }
 
+    public Labyrinth getLabyrinth() {
+        return labyrinth;
+    }
 }

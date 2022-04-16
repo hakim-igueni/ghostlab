@@ -15,6 +15,20 @@ public class WelcomePlayerService implements Runnable {
         this.startedGames = startedGames;
     }
 
+    public void execSIZERequest(PrintWriter pw, int m) {
+        // verify if the game exists
+        if (notStartedGames.containsKey(m) || startedGames.containsKey(m)) {
+            Game g = notStartedGames.get(m);
+            if (g == null) {
+                g = startedGames.get(m);
+            }
+            // send SIZE! m h w
+            pw.printf("SIZE! %d %d %d***", m, g.getLabyrinth().getHeight(), g.getLabyrinth().getWidth());
+        } else {
+            pw.printf("DUNNO***");
+        }
+    }
+
     public void run() {
         try {
             InputStreamReader inSR = new InputStreamReader(socket.getInputStream());
