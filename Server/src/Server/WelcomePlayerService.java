@@ -15,18 +15,38 @@ public class WelcomePlayerService implements Runnable {
         this.startedGames = startedGames;
     }
 
+    public void execGAMERequest(PrintWriter pw) {
+        // send GAMES n
+        pw.printf("GAMES %d***", notStartedGames.size());
+
+        // send n OGAME
+        for (Game g : notStartedGames.values()) {
+            pw.printf("OGAME %d %d***", g.getId(), g.getNbPlayers());
+        }
+    }
+
+    public void execLISTRequest(PrintWriter pw, int m) {
+        //check if the game exists
+        if (startedGames.containsKey(m) || notStartedGames.containsKey(m)) {
+            Game g = startedGames.get(m);
+            if (g == null) {
+                g = notStartedGames.get(m);
+            }
+            pw.printf("LIST! %d %d***", m, g.getNbPlayers());
+            for (Player p : g.getPlayers()) {
+                pw.printf("PLAYR %d***", p.getId());
+            }
+        } else {
+            pw.print("DUNNO***");
+        }
+    }
+
     public void run() {
         try {
             InputStreamReader inSR = new InputStreamReader(socket.getInputStream());
             PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
-            // send GAMES n
-            pw.printf("GAMES %d***", notStartedGames.size());
-
-            // send n OGAME
-            for (Game g : notStartedGames.values()) {
-                pw.printf("OGAME %d %d***", g.getId(), g.getNbPlayers());
-            }
+            execGAMERequest(pw);
 
             // wait for player to send REGIS or NEWPL
             // if NEWPL
