@@ -6,11 +6,11 @@ public class Player {
     private int UDPPort;
     private Game game = null;
 
-    public Player(String id, String ipAddress, int UDPPort) {
-        this.id = id;
-        this.ipAddress = ipAddress;
-        this.UDPPort = UDPPort;
-    }
+//    public Player(String id, int UDPPort) {
+//        this.id = id;
+////        this.ipAddress = ipAddress;
+//        this.UDPPort = UDPPort;
+//    }
 
     public String getId() {
         return id;
@@ -37,12 +37,21 @@ public class Player {
     }
 
     public boolean unsubscribe() {
-        if (game != null) {
-            game.removePlayer(this);
-            game = null;
+        if (this.game != null) {
+            this.game.removePlayer(this);
+            this.game = null;
             return true;
         }
         return false;
     }
+
+    public int getPort(int port) {
+        return UDPPort;
+    }
+
+    public void setPort(int port) {
+        this.UDPPort = port;
+    }
+
 }
 

@@ -3,14 +3,16 @@ package Server;
 import java.util.HashMap;
 
 public class Game {
+    private static int nbGames = 0;
     private int id;
     private int nbPlayersWhoSentSTART = 0;
     private HashMap<String, Player> players = new HashMap<>();
     private boolean started = false;
     private Labyrinth labyrinth;
 
-    public Game(int id) {
-        this.id = id;
+    public Game() {
+        nbGames++;
+        this.id = nbGames;
     }
 
     public int getId() {
@@ -57,4 +59,7 @@ public class Game {
         players.remove(player.getId());
     }
 
+    public void addPlayer(Player player) {
+        players.put(player.getId(), player);
+    }
 }
