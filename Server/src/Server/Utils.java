@@ -1,6 +1,7 @@
 package Server;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 public class Utils {
     private Utils() {
@@ -26,6 +27,7 @@ public class Utils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return sb.toString();
+        String req = sb.toString();
+        return req.subSequence(0, req.length() - 3).toString();
     }
 }

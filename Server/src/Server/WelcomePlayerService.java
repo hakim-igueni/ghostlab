@@ -53,7 +53,8 @@ public class WelcomePlayerService implements Runnable {
             port = Integer.parseInt(requestSplit[2]);
             switch (command) {
                 case "NEWPL": // NEWPL id port***
-                    done = treatNEWPLRequest(id, port);
+                    treatNEWPLRequest(id, port);
+                    done = true;
                     break;
                 case "REGIS": // REGIS id port m***
                     if (requestSplit.length != 4) {
@@ -77,27 +78,29 @@ public class WelcomePlayerService implements Runnable {
             requestSplit = request.split(" ");
             command = requestSplit[0];
             switch (command) {
-                case "UNREG***":
+                case "UNREG":
                     treatUNREGRequest();
                     break;
                 case "SIZE?":
                     if (requestSplit.length != 2) {
-                        this.out.printf("SIZENO***");
+                        this.out.printf("DUNNO***");
                         continue;
                     }
-                    treatSIZERequest(Integer.parseInt(requestSplit[1]));
+                    m = Integer.parseInt(requestSplit[1]);
+                    treatSIZERequest(m);
                     break;
                 case "LIST?":
                     if (requestSplit.length != 2) {
-                        this.out.printf("LISTNO***");
+                        this.out.printf("DUNNO***");
                         continue;
                     }
-                    treatLISTRequest(Integer.parseInt(requestSplit[1]));
+                    m = Integer.parseInt(requestSplit[1]);
+                    treatLISTRequest(m);
                     break;
-                case "GAME?***":
+                case "GAME?":
                     treatGAMERequest();
                     break;
-                case "START***":
+                case "START":
 //                    treatSTARTRequest();
                     done = true;
                     break;
@@ -107,7 +110,7 @@ public class WelcomePlayerService implements Runnable {
         }
     }
 
-    private boolean treatNEWPLRequest(String id, int port) {
+    private void treatNEWPLRequest(String id, int port) {
         // NEWPL id port***
         this.player.setId(id);
         this.player.setPort(port);
@@ -116,7 +119,6 @@ public class WelcomePlayerService implements Runnable {
         this.player.setGame(game);
         notStartedGames.put(game.getId(), game);
         this.out.printf("REGOK %d***", game.getId()); // send REGOK m
-        return true;
     }
 
     private boolean treatREGISRequest(String id, int port, int m) {
