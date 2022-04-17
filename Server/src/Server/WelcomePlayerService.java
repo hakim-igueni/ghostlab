@@ -6,13 +6,15 @@ import java.util.HashMap;
 
 public class WelcomePlayerService implements Runnable {
     private Socket socket;
+    private Player player;
     private HashMap<Integer, Game> notStartedGames;
     private HashMap<Integer, Game> startedGames;
 
-    public WelcomePlayerService(Socket s, HashMap<Integer, Game> notStartedGames, HashMap<Integer, Game> startedGames) {
+    public WelcomePlayerService(Socket s, HashMap<Integer, Game> notStartedGames, HashMap<Integer, Game> startedGames, Player player) {
         this.socket = s;
         this.notStartedGames = notStartedGames;
         this.startedGames = startedGames;
+        this.player = player;
     }
 
     public void execSIZERequest(PrintWriter pw, int m) {
@@ -55,12 +57,25 @@ public class WelcomePlayerService implements Runnable {
         }
     }
 
+    public void execUNREGRequest(PrintWriter pw) {
+        // check if the game exists
+        if (this.player.getGame() != null) {
+            int m = this.player.getGame().getId();
+            this.player.unsubscribe();
+            pw.printf("UNROK %d***", m);
+        } else {
+            pw.print("DUNNO***");
+        }
+    }
+
     public void run() {
         try {
             InputStreamReader inSR = new InputStreamReader(socket.getInputStream());
             PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
 
             execGAMERequest(pw);
+            execLISTRequest(pw, -1);
+            execSIZERequest(pw, -1);
 
             // wait for player to send REGIS or NEWPL
             // if NEWPL

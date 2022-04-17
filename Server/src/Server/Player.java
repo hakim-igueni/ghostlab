@@ -1,19 +1,23 @@
 package Server;
 
 public class Player {
-    private int id;
+    private String id;
     private String ipAddress;
     private int UDPPort;
     private Game game = null;
 
-    public Player(int id, String ipAddress, int UDPPort) {
+    public Player(String id, String ipAddress, int UDPPort) {
         this.id = id;
         this.ipAddress = ipAddress;
         this.UDPPort = UDPPort;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getIpAddress() {
@@ -30,6 +34,15 @@ public class Player {
 
     public void setGame(Game game) {
         this.game = game;
+    }
+
+    public boolean unsubscribe() {
+        if (game != null) {
+            game.removePlayer(this);
+            game = null;
+            return true;
+        }
+        return false;
     }
 }
 

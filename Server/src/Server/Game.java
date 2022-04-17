@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class Game {
     private int id;
     private int nbPlayersWhoSentSTART = 0;
-    private HashMap<String, Player> players = new HashMap<String, Player>();
+    private HashMap<String, Player> players = new HashMap<>();
     private boolean started = false;
     private Labyrinth labyrinth;
 
@@ -52,4 +52,9 @@ public class Game {
     public Labyrinth getLabyrinth() {
         return labyrinth;
     }
+
+    public void removePlayer(Player player) {
+        players.remove(player.getId());
+    }
+
 }
