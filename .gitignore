@@ -1,3 +1,6 @@
 Server/.idea
 Server/out
 Server/Server.iml
+Client/client
+Client/*.o
+
