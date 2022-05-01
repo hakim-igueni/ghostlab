@@ -5,12 +5,7 @@ public class Player {
     private String ipAddress;
     private int UDPPort;
     private Game game = null;
-
-//    public Player(String id, int UDPPort) {
-//        this.id = id;
-////        this.ipAddress = ipAddress;
-//        this.UDPPort = UDPPort;
-//    }
+    private boolean hasSentSTART = false;
 
     public String getId() {
         return id;
@@ -35,6 +30,15 @@ public class Player {
     public void setGame(Game game) {
         this.game = game;
     }
+
+    public boolean hasSentSTART() {
+        return hasSentSTART;
+    }
+
+    public void sendSTART() {
+        this.hasSentSTART = true;
+    }
+
 
     public boolean unsubscribe() {
         if (this.game != null) {

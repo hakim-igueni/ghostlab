@@ -10,9 +10,12 @@ public class Utils {
     public static String readRequest(InputStreamReader inSR) {
         StringBuilder sb = new StringBuilder();
         try {
-            int c, nbConsecutiveStars = 0;
+            int nbConsecutiveStars = 0, c = inSR.read();
+            if (c == -1) {
+                return null;
+            }
             char cc;
-            while ((c = inSR.read()) != -1) {
+            do {
                 cc = (char) c;
                 sb.append(cc);
                 if (cc == '*') {
@@ -23,11 +26,14 @@ public class Utils {
                 } else {
                     nbConsecutiveStars = 0;
                 }
-            }
+            } while ((c = inSR.read()) != -1);
         } catch (IOException e) {
             e.printStackTrace();
         }
         String req = sb.toString();
-        return req.subSequence(0, req.length() - 3).toString();
+        if (req.length() > 3) {
+            return req.subSequence(0, req.length() - 3).toString();
+        }
+        return "";
     }
 }

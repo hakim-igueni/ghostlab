@@ -1,6 +1,7 @@
 package Server;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 public class Game {
     private static int nbGames = 0;
@@ -23,16 +24,8 @@ public class Game {
         this.id = id;
     }
 
-    public int getNbPlayersWhoSentSTART() {
-        return nbPlayersWhoSentSTART;
-    }
-
-    public void setNbPlayersWhoSentSTART(int nbPlayersWhoSentSTART) {
-        this.nbPlayersWhoSentSTART = nbPlayersWhoSentSTART;
-    }
-
-    public HashMap<String, Player> getPlayers() {
-        return players;
+    public void forEachPlayer(Consumer<Player> action) {
+        players.forEach((id, player) -> action.accept(player));
     }
 
     public void setPlayers(HashMap<String, Player> players) {
@@ -51,12 +44,19 @@ public class Game {
         return players.size();
     }
 
-    public Labyrinth getLabyrinth() {
-        return labyrinth;
+    public int getLabyrinthWidth() {
+        return labyrinth.getWidth();
+    }
+
+    public int getLabyrinthHeight() {
+        return labyrinth.getHeight();
     }
 
     public void removePlayer(Player player) {
         players.remove(player.getId());
+        if (player.hasSentSTART()) {
+            nbPlayersWhoSentSTART--;
+        }
     }
 
     public void addPlayer(Player player) {
