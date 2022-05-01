@@ -1,19 +1,19 @@
 package Server;
 
 public class Labyrinth {
-    private int height;
-    private int width;
+    private short height;
+    private short width;
 
-    public Labyrinth(int height, int width) {
-        this.height = height;
-        this.width = width;
-    }
+//    public Labyrinth(short height, short width) {
+//        this.height = height;
+//        this.width = width;
+//    }
 
-    public int getHeight() {
+    public short getHeight() {
         return height;
     }
 
-    public int getWidth() {
+    public short getWidth() {
         return width;
     }
 }

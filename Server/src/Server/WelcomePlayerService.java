@@ -80,7 +80,7 @@ public class WelcomePlayerService implements Runnable {
             return;
         }
         this.player.setId(args[1]);
-        this.player.setPort(Integer.parseInt(args[2]));
+        this.player.setPort(Byte.parseByte(args[2]));
         Game game = new Game();
         game.addPlayer(this.player);
         this.player.setGame(game);
@@ -95,8 +95,8 @@ public class WelcomePlayerService implements Runnable {
             return;
         }
         this.player.setId(args[1]);
-        this.player.setPort(Integer.parseInt(args[2]));
-        int m = Integer.parseInt(args[3]);
+        this.player.setPort(Byte.parseByte(args[2]));
+        byte m = Byte.parseByte(args[3]);
         if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
             this.out.printf("REGNO***");
             return;
@@ -127,14 +127,21 @@ public class WelcomePlayerService implements Runnable {
             sendDUNNO();
             return;
         }
-        int m = Integer.parseInt(args[1]);
+        byte m = Byte.parseByte(args[1]);
         Game g = ServerImpl.INSTANCE.getGame(m);
         if (g == null) {
             sendDUNNO();
             return;
         }
         // send SIZE! m h w***
-        this.out.printf("SIZE! %d %d %d***", m, g.getLabyrinthHeight(), g.getLabyrinthWidth());
+        short h = g.getLabyrinthWidth();
+        short w = g.getLabyrinthHeight();
+        byte[] b1 = new byte[2], b2 = new byte[2];
+        b1[0] = (byte) h;
+        b1[1] = (byte) (h >> 8);
+        b2[0] = (byte) w;
+        b2[1] = (byte) (w >> 8);
+        this.out.printf("SIZE! %c %c%c %c%c***", m, b1[0], b1[1], b2[0], b2[1]);
     }
 
     private void treatLISTRequest(String[] args) {
@@ -144,7 +151,7 @@ public class WelcomePlayerService implements Runnable {
             return;
         }
         //check if the game exists
-        int m = Integer.parseInt(args[1]);
+        byte m = Byte.parseByte(args[1]);
         Game g = ServerImpl.INSTANCE.getGame(m);
         if (g == null) {
             sendDUNNO();
@@ -160,9 +167,9 @@ public class WelcomePlayerService implements Runnable {
             sendDUNNO();
             return;
         }
-        this.out.printf("GAMES %d***", ServerImpl.INSTANCE.nbNotStartedGames());
+        this.out.printf("GAMES %c***", (char) ServerImpl.INSTANCE.nbNotStartedGames());
         // send n OGAME
-        ServerImpl.INSTANCE.forEachNotStartedGame(g -> this.out.printf("OGAME %d %d***", g.getId(), g.getNbPlayers()));
+        ServerImpl.INSTANCE.forEachNotStartedGame(g -> this.out.printf("OGAME %c %c***", (char) g.getId(), (char) g.getNbPlayers()));
     }
 
     private void treatSTARTRequest(String[] args) {

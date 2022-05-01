@@ -7,8 +7,8 @@ public class ServerImpl {
     // The server's state.
     public static final ServerImpl INSTANCE = new ServerImpl();
     private final HashMap<String, Player> connectedPlayers = new HashMap<>();
-    private final HashMap<Integer, Game> notStartedGames = new HashMap<>();
-    private final HashMap<Integer, Game> startedGames = new HashMap<>();
+    private final HashMap<Byte, Game> notStartedGames = new HashMap<>();
+    private final HashMap<Byte, Game> startedGames = new HashMap<>();
 
     private ServerImpl() {
     }
@@ -25,7 +25,7 @@ public class ServerImpl {
         return connectedPlayers.get(name);
     }
 
-    public void addPlayerToGame(Player player, int gameId) {
+    public void addPlayerToGame(Player player, byte gameId) {
         Game game = notStartedGames.get(gameId);
         if (game != null) {
             game.addPlayer(player);
@@ -49,14 +49,14 @@ public class ServerImpl {
         }
     }
 
-    public Game getGame(int id) {
+    public Game getGame(byte id) {
         if (startedGames.containsKey(id)) {
             return startedGames.get(id);
         }
         return notStartedGames.get(id);
     }
 
-    public Game getNotStartedGame(int id) {
+    public Game getNotStartedGame(byte id) {
         return notStartedGames.get(id);
     }
 
@@ -65,11 +65,11 @@ public class ServerImpl {
         startedGames.put(game.getId(), game);
     }
 
-    public void removeStartedGame(int id) {
+    public void removeStartedGame(byte id) {
         startedGames.remove(id);
     }
 
-    public void removeNotStartedGame(int id) {
+    public void removeNotStartedGame(byte id) {
         notStartedGames.remove(id);
     }
 
@@ -77,11 +77,11 @@ public class ServerImpl {
         return connectedPlayers.containsKey(name);
     }
 
-    public boolean isStartedGame(int id) {
+    public boolean isStartedGame(byte id) {
         return startedGames.containsKey(id);
     }
 
-    public boolean isNotStartedGame(int id) {
+    public boolean isNotStartedGame(byte id) {
         return notStartedGames.containsKey(id);
     }
 
@@ -89,8 +89,8 @@ public class ServerImpl {
         return startedGames.size();
     }
 
-    public int nbNotStartedGames() {
-        return notStartedGames.size();
+    public byte nbNotStartedGames() {
+        return (byte) notStartedGames.size();
     }
 
     public void forEachNotStartedGame(Consumer<Game> consumer) {

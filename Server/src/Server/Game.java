@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 public class Game {
-    private static int nbGames = 0;
-    private int id;
-    private int nbPlayersWhoSentSTART = 0;
+    private static byte nbGames = 0;
+    private byte id;
+    private byte nbPlayersWhoSentSTART = 0;
     private HashMap<String, Player> players = new HashMap<>();
     private boolean started = false;
     private Labyrinth labyrinth;
@@ -16,11 +16,11 @@ public class Game {
         this.id = nbGames;
     }
 
-    public int getId() {
+    public byte getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(byte id) {
         this.id = id;
     }
 
@@ -40,15 +40,15 @@ public class Game {
         this.started = started;
     }
 
-    public int getNbPlayers() {
-        return players.size();
+    public byte getNbPlayers() {
+        return (byte) players.size();
     }
 
-    public int getLabyrinthWidth() {
+    public short getLabyrinthWidth() {
         return labyrinth.getWidth();
     }
 
-    public int getLabyrinthHeight() {
+    public short getLabyrinthHeight() {
         return labyrinth.getHeight();
     }
 
