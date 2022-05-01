@@ -51,21 +51,22 @@ public class WelcomePlayerService implements Runnable {
         // in case of START, block the player, make him wait, how? (ignore his messages)
 
         while (true) { // while the player is still connected
-            request = readRequest(in);
+            request = readRequest(this.in);
             if (request == null) { // the client is disconnected
                 // remove the player from the list of players
                 ServerImpl.INSTANCE.removeConnectedPlayer(this.player.getId());
 
-                // remove the player from the game he is in
+                // remove the player from the game where he was
                 if (this.player.getGame() != null) {
                     this.player.getGame().removePlayer(this.player);
+
+                    // remove the game if it has no players left
+                    if (this.player.getGame().getNbPlayers() == 0) {
+                        ServerImpl.INSTANCE.removeGame(this.player.getGame());
+                    }
                 }
 
-                // remove the game if it has no players left
-                if (this.player.getGame().getNbPlayers() == 0) {
-                    ServerImpl.INSTANCE.removeGame(this.player.getGame());
-                }
-                System.out.println("player " + this.player.getId() + " disconnected");
+                System.out.println("Player [" + this.player.getId() + "] disconnected");
                 break;
             }
             args = request.split(" ");
@@ -80,12 +81,12 @@ public class WelcomePlayerService implements Runnable {
             return;
         }
         this.player.setId(args[1]);
-        this.player.setPort(Byte.parseByte(args[2]));
+        this.player.setPort(Integer.parseInt(args[2]));
         Game game = new Game();
         game.addPlayer(this.player);
         this.player.setGame(game);
         ServerImpl.INSTANCE.addNotStartedGame(game);
-        this.out.printf("REGOK %d***", game.getId()); // send REGOK m
+        this.out.printf("REGOK %c***", game.getId()); // send REGOK m
     }
 
     private void treatREGISRequest(String[] args) {
