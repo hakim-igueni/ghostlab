@@ -65,14 +65,13 @@ void send_GAME_request(int socket_fd, uint8_t *games)
 {
     char buffer[BUFFER_SIZE];
     // Envoi du message "GAME?***"
-    printf("\n[---Demande de la liste des parties---]\n");
     memset(buffer, 0, BUFFER_SIZE);
-    sprintf(buffer, "GAME?***\n");
+    sprintf(buffer, "GAME?***");
     printf("Le message à envoyer au serveur : %s\n", buffer);
     int sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
     {
-        perror("send");
+        perror("[GAME] send");
         exit(EXIT_FAILURE);
     }
     // Récupération des parties
@@ -118,6 +117,122 @@ void send_NEWPL_request(int socket_fd)
     }
 }
 
+// void send_REGIS_request(int socket_fd)
+// {
+//     // Envoi du message "REGIS id port m***" pour rejoindre une partie
+//     char *username = "username";
+//     char *port = "2121";
+//     char m = '1';
+//     char buffer[BUFFER_SIZE];
+//     memset(buffer, 0, BUFFER_SIZE);
+//     sprintf(buffer, "REGIS %c %c %c***", username, port, m);
+//     printf("Le message à envoyer au serveur : %s\n", buffer);
+//     int sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
+//     if (sent_bytes == -1)
+//     {
+//         perror("[REGIS] send");
+//         exit(EXIT_FAILURE);
+//     }
+//     // Recevoir la reponse du serveur
+//     memset(buffer, 0, BUFFER_SIZE);
+//     int received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
+//     if (received_bytes == -1)
+//     {
+//         perror("[REGIS] read");
+//         exit(EXIT_FAILURE);
+//     }
+//     buffer[received_bytes] = '\0';
+//     printf("[REGIS] La réponse du serveur : %s\n", buffer);
+// }
+
+// void send_UNREG_request(int socket_fd)
+// {
+//     // Envoi du message "UNREG***" pour quitter une partie
+//     char buffer[BUFFER_SIZE];
+//     memset(buffer, 0, BUFFER_SIZE);
+//     sprintf(buffer, "UNREG***");
+//     int sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
+//     if (sent_bytes == -1)
+//     {
+//         perror("send");
+//         exit(EXIT_FAILURE);
+//     }
+//     // Recevoir la reponse du serveur
+//     memset(buffer, 0, BUFFER_SIZE);
+//     int received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
+//     if (received_bytes == -1)
+//     {
+//         perror("[UNREG] read");
+//         exit(EXIT_FAILURE);
+//     }
+//     buffer[received_bytes] = '\0';
+//     printf("[UNREG] La réponse du serveur : %s\n", buffer);
+// }
+
+// void send_SIZE_request(int socket_fd)
+// {
+//     // Envoi du message "SIZE? m***" pour connaitre la taille de la grille
+//     char buffer[BUFFER_SIZE];
+//     memset(buffer, 0, BUFFER_SIZE);
+//     char m = '1';
+//     sprintf(buffer, "SIZE? %c***", m);
+//     int sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
+//     if (sent_bytes == -1)
+//     {
+//         perror("[SIZE] send");
+//         exit(EXIT_FAILURE);
+//     }
+//     // Recevoir la reponse du serveur sous la forme "SIZE! m h w***"
+//     memset(buffer, 0, BUFFER_SIZE);
+//     int received_bytes = recv(socket_fd, buffer, 16, 0);
+//     if (received_bytes == -1)
+//     {
+//         perror("[SIZE] read");
+//         exit(EXIT_FAILURE);
+//     }
+//     buffer[received_bytes] = '\0';
+//     printf("[SIZE] La réponse du serveur : %s\n", buffer);
+// }
+
+// void send_LIST_request(int socket_fd)
+// {
+//     // Envoi du message "LIST? m***" pour connaitre la liste des joueurs
+//     char buffer[BUFFER_SIZE];
+//     memset(buffer, 0, BUFFER_SIZE);
+//     char m = '1';
+//     sprintf(buffer, "LIST? %c***", m);
+//     int sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
+//     if (sent_bytes == -1)
+//     {
+//         perror("[LIST] send");
+//         exit(EXIT_FAILURE);
+//     }
+//     // Recevoir la reponse du serveur sous la forme "LIST! m s***"
+//     memset(buffer, 0, BUFFER_SIZE);
+//     int received_bytes = recv(socket_fd, buffer, 12, 0);
+//     if (received_bytes == -1)
+//     {
+//         perror("[LIST] read");
+//         exit(EXIT_FAILURE);
+//     }
+//     buffer[received_bytes] = '\0';
+//     uint8_t m = (uint8_t)buffer[6];
+//     uint8_t s = (uint8_t)buffer[8];
+//     for (int i = 0; i < s; i++)
+//     {
+//         // recevoir les joueurs sous la forme "PLAYR id***"
+//         memset(buffer, 0, BUFFER_SIZE);
+//         received_bytes = recv(socket_fd, buffer, 17, 0);
+//         if (received_bytes == -1)
+//         {
+//             perror("[LIST] read");
+//             exit(EXIT_FAILURE);
+//         }
+//         buffer[received_bytes] = '\0';
+//         printf("[LIST] Le joueur %d est %s\n", i + 1, buffer);
+//     }
+// }
+
 int main()
 {
     // Déclaration des variables
@@ -138,12 +253,11 @@ int main()
 
     // Création de la socket client
     int socket_fd = socket(PF_INET, SOCK_STREAM, 0);
-    // gestion d'erreur
-    // if (socket_fd == -1)
-    // {
-    //     perror("socket");
-    //     exit(EXIT_FAILURE);
-    // }
+    if (socket_fd == -1)
+    {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
 
     // Connexion au serveur
     int connect_status = connect(socket_fd, (struct sockaddr *)&socket_adr, sizeof(socket_adr));
@@ -156,163 +270,36 @@ int main()
     printf("[---Connexion au serveur réussie---]\n");
     recv_GAMES(socket_fd, games);
 
-    // -------------------Créer une nouvelle partie-----------------------
+    // -------------------Créer une nouvelle partie------------------------
     printf("\n[---Création d'une nouvelle partie---]\n");
     send_NEWPL_request(socket_fd);
     sleep(10);
-    // -------------------Demande de la liste des parties-----------------------
+
+    // -------------------Demande de la liste des parties------------------
     printf("\n[---Demande de la liste des parties---]\n");
     send_GAME_request(socket_fd, games);
     sleep(20);
-    //     // ------------------Rejoindre une partie-------------------------
-    //     // Envoi du message "REGIS id port m***" pour rejoindre une partie
-    //     printf("\n[---Rejoindre une partie---]\n");
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     sprintf(buffer, "REGIS %d %d %d***\n", 87, 2121, liste_parties->id_partie);
-    //     printf("Le message à envoyer au serveur : %s\n", buffer);
-    //     sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
-    //     if (sent_bytes == -1)
-    //     {
-    //         perror("send");
-    //         exit(EXIT_FAILURE);
-    //     }
 
-    //     // Recevoir la reponse du serveur
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
-    //     if (received_bytes == -1)
-    //     {
-    //         perror("read");
-    //         exit(EXIT_FAILURE);
-    //     }
-    //     buffer[received_bytes] = '\0';
-    //     printf("La réponse du serveur : %s\n", buffer);
+    // ------------------Rejoindre une partie------------------------------
+    // printf("\n[---Rejoindre une partie---]\n");
+    // send_REGIS_request(socket_fd);
+    // sleep(10);
 
-    //     // ------------------Se désinscrire d'une partie-------------------------
-    //     // Envoi du message "UNREG***"
-    //     printf("\n[---Se désinscrire d'une partie---]\n");
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     sprintf(buffer, "UNREG***\n");
-    //     printf("Le message à envoyer au serveur : %s\n", buffer);
-    //     sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
-    //     if (sent_bytes == -1)
-    //     {
-    //         perror("send");
-    //         exit(EXIT_FAILURE);
-    //     }
+    // ------------------Se désinscrire d'une partie-----------------------
+    // printf("\n[---Se désinscrire d'une partie---]\n");
+    // send_UNREG_request(socket_fd);
+    // sleep(10);
 
-    //     // Recevoir la reponse du serveur
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
-    //     if (received_bytes == -1)
-    //     {
-    //         perror("read");
-    //         exit(EXIT_FAILURE);
-    //     }
-    //     buffer[received_bytes] = '\0';
-    //     printf("La réponse du serveur : %s\n", buffer);
+    // -------------Demande de la taille du labyrinthe-------------------
+    // printf("\n[---Demande de la taille du labyrinthe---]\n");
+    // send_SIZE_request(socket_fd);
+    // sleep(10);
 
-    //     // -------------Demande de la taille du labyrinthe-------------------
-    //     // Envoi du message "SIZE? m***"
-    //     printf("\n[---Demande de la taille du labyrinthe---]\n");
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     sprintf(buffer, "SIZE? %d***\n", liste_parties->id_partie);
-    //     printf("Le message à envoyer au serveur : %s\n", buffer);
-    //     sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
-    //     if (sent_bytes == -1)
-    //     {
-    //         perror("send");
-    //         exit(EXIT_FAILURE);
-    //     }
+    // -------------Demande de la liste des joueurs-------------------
+    // printf("\n[---Demande de la liste des joueurs---]\n");
+    // send_LIST_request(socket_fd);
+    // sleep(10);
 
-    //     // Recevoir la reponse du serveur
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
-    //     if (received_bytes == -1)
-    //     {
-    //         perror("read");
-    //         exit(EXIT_FAILURE);
-    //     }
-    //     buffer[received_bytes] = '\0';
-    //     printf("La réponse du serveur : %s\n", buffer);
-
-    //     // -------------Demande de la liste des joueurs-------------------
-    //     // Envoi du message "LIST? m***"
-    //     printf("\n[---Demande de la liste des joueurs---]\n");
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     sprintf(buffer, "LIST? %d***\n", liste_parties->id_partie);
-    //     printf("Le message à envoyer au serveur : %s\n", buffer);
-    //     sent_bytes = send(socket_fd, buffer, strlen(buffer), 0);
-    //     if (sent_bytes == -1)
-    //     {
-    //         perror("send");
-    //         exit(EXIT_FAILURE);
-    //     }
-
-    //     // Recevoir la reponse du serveur
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
-    //     if (received_bytes == -1)
-    //     {
-    //         perror("read");
-    //         exit(EXIT_FAILURE);
-    //     }
-    //     buffer[received_bytes] = '\0';
-    //     printf("La réponse du serveur : %s\n", buffer);
-    //     nb_joueurs = atoi(buffer + 7);
-    //     struct list_players *liste_joueurs = NULL;
-
-    //     for (int i = 0; i < nb_joueurs; i++)
-    //     {
-    //         memset(buffer, 0, BUFFER_SIZE);
-    //         received_bytes = recv(socket_fd, buffer, 11, 0);
-    //         if (received_bytes == -1)
-    //         {
-    //             perror("read");
-    //             exit(EXIT_FAILURE);
-    //         }
-    //         buffer[received_bytes] = '\0';
-    //         printf("Le message envoyé par le serveur : %s\n", buffer);
-    //         liste_joueurs = add_player(atoi(buffer + 5), liste_joueurs);
-    //     }
-    //     afficher_liste_players(liste_joueurs);
-
-    //     // -------------Demande de la liste des parties-------------------
-
-    //     // Recevoir la reponse du serveur
-    //     memset(buffer, 0, BUFFER_SIZE);
-    //     received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
-    //     if (received_bytes == -1)
-    //     {
-    //         perror("read");
-    //         exit(EXIT_FAILURE);
-    //     }
-    //     buffer[received_bytes] = '\0';
-    //     printf("La réponse du serveur : %s\n", buffer);
-    //     n = atoi(buffer + 6);
-
-    //     for (int i = 0; i < n; i++)
-    //     {
-    //         // Reinitiation du buffer
-    //         memset(buffer, 0, BUFFER_SIZE);
-
-    //         // Recevoir le message "OGAMES m s***"
-    //         // m le numéro de la partie et s le nombre de joueurs
-    //         received_bytes = recv(socket_fd, buffer, BUFFER_SIZE, 0);
-    //         if (received_bytes == -1)
-    //         {
-    //             perror("read");
-    //             exit(EXIT_FAILURE);
-    //         }
-    //         buffer[received_bytes] = '\0';
-    //         printf("Le message envoyé par le serveur : %s\n", buffer);
-    //         id_partie = atoi(buffer + 7);
-    //         nb_joueurs = atoi(buffer + 9);
-    //         liste_parties = add_partie(id_partie, nb_joueurs, liste_parties);
-    //     }
-
-    //     // Afficher la liste des parties
-    //     afficher_liste_parties(liste_parties);
-
-    //     close(socket_fd);
+    // Fermeture de la socket
+    close(socket_fd);
 }
