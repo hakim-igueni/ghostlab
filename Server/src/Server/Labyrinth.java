@@ -1,8 +1,8 @@
 package Server;
 
 public class Labyrinth {
-    private short height; //le nombre de lignes
-    private short width; //le nombre de colonnes
+    private final short height; //le nombre de lignes
+    private final short width; //le nombre de colonnes
     private char[][] tab;   //[hauteur][largeur]
 
     public Labyrinth(short height, short width) {
