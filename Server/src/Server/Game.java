@@ -77,6 +77,6 @@ public class Game {
     }
 
     public void sendOGAME(PrintWriter out) {
-        out.printf("OGAME %d %d***", this.id, getNbPlayers());
+        out.printf("OGAME %c %c***", this.id, getNbPlayers());
     }
 }

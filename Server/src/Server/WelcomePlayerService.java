@@ -57,7 +57,7 @@ public class WelcomePlayerService implements Runnable {
                 }
                 break;
             }
-            args = request.split(" ");
+            args = request.split(" "); // TODO: check if the method split does exactly what we want
             commands.getOrDefault(args[0], (a -> sendDUNNO())).accept(args);
         }
     }
@@ -90,7 +90,7 @@ public class WelcomePlayerService implements Runnable {
             game.addPlayer(this.player);
             this.player.setGame(game);
             ServerImpl.INSTANCE.addNotStartedGame(game);
-            this.out.printf("REGOK %d***", game.getId()); // send REGOK m
+            this.out.printf("REGOK %c***", game.getId()); // send REGOK m***
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -110,13 +110,13 @@ public class WelcomePlayerService implements Runnable {
             int port = Integer.parseInt(args[2]);
             this.player.setId(id);
             this.player.setPort(port);
-            byte m = Byte.parseByte(args[3]);
+            byte m = args[3].getBytes()[0]; // TODO: check if args[3] is a single byte
             if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
                 this.out.printf("REGNO***");
                 return;
             }
             ServerImpl.INSTANCE.addPlayerToGame(this.player, m);
-            this.out.printf("REGOK %d***", m); // send REGOK m
+            this.out.printf("REGOK %c***", m); // send REGOK m
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -129,13 +129,13 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 1) { // TODO: see what happens when the player sends [UNREG ***] (a space after UNREG)
                 throw new Exception("UNREG request must have 0 arguments");
             }
-            int m = this.player.getGame().getId();
+            byte m = this.player.getGame().getId();
             if (!this.player.unsubscribe()) {
                 sendDUNNO();
                 return;
             }
             // send UNROK m***
-            this.out.printf("UNROK %d***", m);
+            this.out.printf("UNROK %c***", m);
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -149,7 +149,7 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 2) {
                 throw new Exception("SIZE? request must have 1 argument: SIZE? m");
             }
-            byte m = Byte.parseByte(args[1]);
+            byte m = args[1].getBytes()[0]; // TODO: check if args[1] is a single byte
             Game g = ServerImpl.INSTANCE.getGame(m);
             if (g == null) {
                 throw new Exception("Game does not exist");
@@ -163,7 +163,7 @@ public class WelcomePlayerService implements Runnable {
             h1 = (byte) (h >> 8); // strongest weight byte
             w0 = (byte) w; // lowest weight byte
             w1 = (byte) (w >> 8); // strongest weight byte
-            this.out.printf("SIZE! %d %d%d %d%d***", m, h0, h1, w0, w1);
+            this.out.printf("SIZE! %c %c%c %c%c***", m, h0, h1, w0, w1); // send SIZE! m h w***
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -177,12 +177,12 @@ public class WelcomePlayerService implements Runnable {
                 throw new Exception("LIST? request must have 1 argument: LIST? m");
             }
             //check if the game exists
-            byte m = Byte.parseByte(args[1]);
+            byte m = args[1].getBytes()[0]; // TODO: check if args[1] is a single byte
             Game g = ServerImpl.INSTANCE.getGame(m);
             if (g == null) {
                 throw new Exception("Game does not exist");
             }
-            this.out.printf("LIST! %d %d***", m, g.getNbPlayers());
+            this.out.printf("LIST! %c %d***", m, g.getNbPlayers()); // send LIST! m s***
             g.forEachPlayer(p -> p.sendPLAYR(this.out));
         } catch (Exception e) {
             e.printStackTrace();
@@ -196,7 +196,7 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 1) {
                 throw new Exception("GAMES request must have 0 arguments");
             }
-            this.out.printf("GAMES %d***", ServerImpl.INSTANCE.nbNotStartedGames());
+            this.out.printf("GAMES %c***", ServerImpl.INSTANCE.nbNotStartedGames());
             // send n OGAME
             ServerImpl.INSTANCE.forEachNotStartedGame(g -> g.sendOGAME(this.out));
         } catch (Exception e) {
@@ -216,7 +216,7 @@ public class WelcomePlayerService implements Runnable {
                 throw new Exception("Player is not in a game");
             }
             // TODO: block the player
-            this.player.sendSTART();
+            this.player.start();
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
