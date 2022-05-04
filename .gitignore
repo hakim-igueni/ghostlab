@@ -3,4 +3,5 @@ Server/out
 Server/Server.iml
 Client/client
 Client/*.o
+Client/.vscode
 
