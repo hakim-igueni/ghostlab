@@ -53,6 +53,10 @@ public class Player {
     public boolean unsubscribe() {
         if (this.game != null) {
             this.game.removePlayer(this);
+            // remove the game if it has no players left
+            if (this.game.getNbPlayers() == 0) {
+                ServerImpl.INSTANCE.removeGame(this.game);
+            }
             this.game = null;
             return true;
         }

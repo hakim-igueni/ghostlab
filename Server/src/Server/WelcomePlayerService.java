@@ -84,7 +84,7 @@ public class WelcomePlayerService implements Runnable {
                 throw new Exception("Port must have 4 digits");
             }
             int port = Integer.parseInt(args[2]);
-            this.player.setId(args[1]);
+            this.player.setId(args[1]); // TODO: check if the id is already used, if so, send an error REGNO
             this.player.setPort(port);
             Game game = new Game();
             game.addPlayer(this.player);
@@ -103,7 +103,7 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 4) {
                 throw new Exception("REGIS request must have 3 arguments: REGIS id port m");
             }
-            String id = args[1];
+            String id = args[1]; // TODO: check if the id is already used, if so, send an error REGNO
             if (isInvalidId(id)) {
                 throw new Exception("ID must have 8 alphanumeric characters");
             }
