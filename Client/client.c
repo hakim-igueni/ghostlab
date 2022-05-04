@@ -12,9 +12,9 @@
 int main()
 {
     // Déclaration des variables
-    int sent_bytes, received_bytes;
-    char buffer[BUFFER_SIZE];
-    uint8_t n, m, s;
+    // int sent_bytes, received_bytes;
+    // char buffer[BUFFER_SIZE];
+    // uint8_t n, m, s;
     uint8_t games[255];
 
     // Adresse de la socket client
@@ -49,22 +49,30 @@ int main()
     // -------------------Créer une nouvelle partie------------------------
     printf("\n[---Création d'une nouvelle partie---]\n");
     send_NEWPL_request(tcpsocket_fd);
-    sleep(10);
+    // sleep(10);
 
     // -------------------Demande de la liste des parties------------------
     printf("\n[---Demande de la liste des parties---]\n");
     send_GAME_request(tcpsocket_fd, games);
-    sleep(20);
-
-    // ------------------Rejoindre une partie------------------------------
-    // printf("\n[---Rejoindre une partie---]\n");
-    // send_REGIS_request(tcpsocket_fd);
-    // sleep(10);
+    // sleep(20);
 
     // ------------------Se désinscrire d'une partie-----------------------
-    // printf("\n[---Se désinscrire d'une partie---]\n");
-    // send_UNREG_request(tcpsocket_fd);
+    printf("\n[---Se désinscrire d'une partie---]\n");
+    send_UNREG_request(tcpsocket_fd);
     // sleep(10);
+
+    // -------------------Demande de la liste des parties------------------
+    printf("\n[---Demande de la liste des parties---]\n");
+    send_GAME_request(tcpsocket_fd, games);
+
+    // ------------------Rejoindre une partie------------------------------
+    printf("\n[---Rejoindre une partie---]\n");
+    send_REGIS_request(tcpsocket_fd, "usernxme", "2131", games[0]);
+    // sleep(10);
+
+    // -------------------Demande de la liste des parties------------------
+    printf("\n[---Demande de la liste des parties---]\n");
+    send_GAME_request(tcpsocket_fd, games);
 
     // -------------Demande de la taille du labyrinthe-------------------
     // printf("\n[---Demande de la taille du labyrinthe---]\n");
@@ -77,8 +85,9 @@ int main()
     // sleep(10);
 
     // Start the game
-    // printf("\n[---Début de la partie---]\n");
-    // send_START_request(tcpsocket_fd);
+    printf("\n[---Début de la partie---]\n");
+    send_START_request(tcpsocket_fd);
+    recv_WELCO(tcpsocket_fd);
     // sleep(10);
 
     //

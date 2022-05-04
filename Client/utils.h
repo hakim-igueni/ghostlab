@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -11,3 +14,5 @@
 #define LOCALHOST "127.0.0.1"
 #define SERVER_PORT 4444
 #define BUFFER_SIZE 1024
+
+#endif

@@ -15,4 +15,4 @@ void send_MALL_request(int tcpsocket_fd, char *mess);
 void sens_SEND_request(int tcpsocket_fd, char *id, char *mess);
 void send_IQUIT(int tcpsocket_fd);
 
-#endif
+#endif // DURING_GAME_FUNCTIONS_H

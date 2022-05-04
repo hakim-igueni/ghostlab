@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "during_game_functions.h"
 
 void recv_WELCO(int tcpsocket_fd)
 {
@@ -12,10 +13,10 @@ void recv_WELCO(int tcpsocket_fd)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    uint8_t m = (uint8_t)buffer[6];
-    uint16_t h = (uint16_t)strtol(buffer + 8, NULL, 10);
-    uint16_t w = (uint16_t)strtol(buffer + 11, NULL, 10);
-    uint8_t f = (uint8_t)buffer[14];
+    // uint8_t m = (uint8_t)buffer[6];
+    // uint16_t h = (uint16_t)strtol(buffer + 8, NULL, 10);
+    // uint16_t w = (uint16_t)strtol(buffer + 11, NULL, 10);
+    // uint8_t f = (uint8_t)buffer[14];
     char ip[16];
     strncpy(ip, buffer + 16, 15);
     // supprimer les # à la fin de l'ip
@@ -24,11 +25,9 @@ void recv_WELCO(int tcpsocket_fd)
     {
         *p = '\0';
     }
-    uint16_t port = (uint16_t)strtol(buffer + 32, NULL, 10);
-    // TODO: Enlever les # à la fin de la ligne ip si besoin
+    // uint16_t port = (uint16_t)strtol(buffer + 32, NULL, 10);
     // TODO: s'abonner à l'adresse ip recu
-
-    // Supprimer les caractères inutiles
+    // s'abonner à l'adresse ip recu
 
     printf("[WELCOME] La réponse du serveur : %s\n", buffer);
 }
@@ -122,7 +121,7 @@ void send_UPMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uin
         exit(EXIT_FAILURE);
     }
     // Recevoir la réponse du serveur sous la forme "MOVE! x y***"
-    recv_MOVE(tcpsocket_fd, &x, &y, &p);
+    recv_MOVE(tcpsocket_fd, x, y, p);
 }
 
 void send_DOMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uint16_t *p)
@@ -139,7 +138,7 @@ void send_DOMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uin
         exit(EXIT_FAILURE);
     }
     // Recevoir la réponse du serveur sous la forme "MOVE! x y***"
-    recv_MOVE(tcpsocket_fd, &x, &y, &p);
+    recv_MOVE(tcpsocket_fd, x, y, p);
 }
 
 void send_LEMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uint16_t *p)
@@ -156,7 +155,7 @@ void send_LEMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uin
         exit(EXIT_FAILURE);
     }
     // Recevoir la réponse du serveur sous la forme "MOVE! x y***"
-    recv_MOVE(tcpsocket_fd, &x, &y, &p);
+    recv_MOVE(tcpsocket_fd, x, y, p);
 }
 
 void send_RIMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uint16_t *p)
@@ -173,7 +172,7 @@ void send_RIMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uin
         exit(EXIT_FAILURE);
     }
     // Recevoir la réponse du serveur sous la forme "MOVE! x y***"
-    recv_MOVE(tcpsocket_fd, &x, &y, &p);
+    recv_MOVE(tcpsocket_fd, x, y, p);
 }
 
 void send_GLIS_request(int tcpsocket_fd)

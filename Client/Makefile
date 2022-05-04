@@ -1,9 +1,24 @@
-CFLAGS = -Wall -Wextra -g -O1 
-TARGETS = client before_game_functions during_game_functions 
+OBJS	= client.o before_game_functions.o during_game_functions.o
+SOURCE	= client.c before_game_functions.c during_game_functions.c
+HEADER	= before_game_functions.h during_game_functions.h utils.h
+OUT	= client
+CC	 = gcc
+FLAGS	 = -g -c -Wall
+LFLAGS	 = 
 
-.PHONY: all clean
+all: $(OBJS)
+	$(CC) -g $(OBJS) -o $(OUT) $(LFLAGS)
+	rm $(OBJS)
 
-all: $(TARGETS)
+client.o: client.c
+	$(CC) $(FLAGS) client.c 
+
+before_game_functions.o: before_game_functions.c
+	$(CC) $(FLAGS) before_game_functions.c 
+
+during_game_functions.o: during_game_functions.c
+	$(CC) $(FLAGS) during_game_functions.c 
+
 
 clean:
-	rm -f $(TARGETS)
+	rm -f $(OBJS) $(OUT)

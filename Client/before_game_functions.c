@@ -1,5 +1,5 @@
 #include "utils.h"
-
+#include "before_game_functions.h"
 void recv_GAMES(int tcpsocket_fd, uint8_t *games)
 {
     char buffer[BUFFER_SIZE];
@@ -12,7 +12,7 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-
+    printf("[recv_GAMES] Message recu: %s\n", buffer);
     // Assurer que le message commence par GAMES
     if (strncmp(buffer, "GAMES", 5) != 0)
     {
@@ -23,7 +23,7 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games)
     // Récupération du nombre de parties
     uint8_t n, m, s;
     n = (uint8_t)buffer[6];
-    printf("Nombre de parties : %d\n\n", n);
+    printf("[recv_GAMES] Nombre de parties : %d\n\n", n);
 
     // Récupupération des parties
     for (int i = 0; i < n; i++)
@@ -46,7 +46,7 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games)
         m = (uint8_t)buffer[6];
         s = (uint8_t)buffer[8];
         games[i] = m;
-        printf("Partie %d : %d joueurs\n", m, s);
+        printf("[recv_GAMES] Partie %d : %d joueurs\n", m, s);
     }
 }
 
@@ -106,12 +106,12 @@ void send_NEWPL_request(int tcpsocket_fd)
     }
 }
 
-void send_REGIS_request(int tcpsocket_fd, char *username, char *port, char *m)
-{
+void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m)
+{ // TODO: use unsigned char instead of char everywhere
     // Envoi du message "REGIS id port m***" pour rejoindre une partie
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    sprintf(buffer, "REGIS %c %c %c***", username, port, m);
+    sprintf(buffer, "REGIS %s %s %c***", username, port, m);
     printf("Le message à envoyer au serveur : %s\n", buffer);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
@@ -130,17 +130,17 @@ void send_REGIS_request(int tcpsocket_fd, char *username, char *port, char *m)
     if (strncmp(buffer, "REGOK", 5) == 0)
     {
         printf("L'inscription est prise en compte\n");
-        received_bytes = recv(tcpsocket_fd, buffer, 5, 0);
+        received_bytes += recv(tcpsocket_fd, buffer + 5, 5, 0);
         if (received_bytes == -1)
         {
             perror("[REGIS] read");
             exit(EXIT_FAILURE);
         }
-        char m_char = (char)buffer[0];
-        if (strncmp(m_char, m, 1) != 0)
-        {
-            printf("[REGIS] L'inscription est faite dans une autre partie\n");
-        }
+        // char m_char = (char)buffer[6];
+        // if (m_char == m)
+        // {
+        //     printf("[REGIS] L'inscription est faite dans une autre partie\n");
+        // }
     }
     else
     {
@@ -206,8 +206,8 @@ void send_LIST_request(int tcpsocket_fd)
     // Envoi du message "LIST? m***" pour connaitre la liste des joueurs
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    char m = '1';
-    sprintf(buffer, "LIST? %c***", m);
+    char m_char = '1';
+    sprintf(buffer, "LIST? %c***", m_char);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
     {
@@ -223,7 +223,7 @@ void send_LIST_request(int tcpsocket_fd)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    uint8_t m = (uint8_t)buffer[6];
+    // uint8_t m = (uint8_t)buffer[6];
     uint8_t s = (uint8_t)buffer[8];
     for (int i = 0; i < s; i++)
     {
@@ -246,6 +246,7 @@ void send_START_request(int tcpsocket_fd)
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "START***");
+    printf("[START] Le message à envoyer au serveur : %s\n", buffer);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
     {
