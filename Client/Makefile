@@ -1,5 +1,5 @@
 CFLAGS = -Wall -Wextra -g -O1 
-TARGETS = client
+TARGETS = client before_game_functions during_game_functions 
 
 .PHONY: all clean
 
