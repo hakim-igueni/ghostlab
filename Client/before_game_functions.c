@@ -106,12 +106,9 @@ void send_NEWPL_request(int tcpsocket_fd)
     }
 }
 
-void send_REGIS_request(int tcpsocket_fd)
+void send_REGIS_request(int tcpsocket_fd, char *username, char *port, char *m)
 {
     // Envoi du message "REGIS id port m***" pour rejoindre une partie
-    char *username = "username";
-    char *port = "2121";
-    char m = '1';
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "REGIS %c %c %c***", username, port, m);
@@ -124,10 +121,31 @@ void send_REGIS_request(int tcpsocket_fd)
     }
     // Recevoir la reponse du serveur
     memset(buffer, 0, BUFFER_SIZE);
-    int received_bytes = recv(tcpsocket_fd, buffer, BUFFER_SIZE, 0);
+    int received_bytes = recv(tcpsocket_fd, buffer, 5, 0);
     if (received_bytes == -1)
     {
         perror("[REGIS] read");
+        exit(EXIT_FAILURE);
+    }
+    if (strncmp(buffer, "REGOK", 5) == 0)
+    {
+        printf("L'inscription est prise en compte\n");
+        received_bytes = recv(tcpsocket_fd, buffer, 5, 0);
+        if (received_bytes == -1)
+        {
+            perror("[REGIS] read");
+            exit(EXIT_FAILURE);
+        }
+        char m_char = (char)buffer[0];
+        if (strncmp(m_char, m, 1) != 0)
+        {
+            printf("[REGIS] L'inscription est faite dans une autre partie\n");
+        }
+    }
+    else
+    {
+        puts(buffer);
+        printf("L'inscription n'est pas prise en compte\n");
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';

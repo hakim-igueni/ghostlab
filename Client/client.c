@@ -1,4 +1,6 @@
 #include "utils.h"
+#include "before_game_functions.h"
+#include "during_game_functions.h"
 // ------------------- LES MESSAGES TCP -------------------   //
 /* Dans cette partie la socket qu'on spécifie est celle du serveur*/
 
