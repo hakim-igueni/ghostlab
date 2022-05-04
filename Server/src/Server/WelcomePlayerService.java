@@ -19,7 +19,7 @@ public class WelcomePlayerService implements Runnable {
     public WelcomePlayerService(Socket s) throws IOException {
         this.out = new PrintWriter(new OutputStreamWriter(s.getOutputStream()), true);
         this.in = new InputStreamReader(s.getInputStream());
-        this.player = new Player();
+        this.player = new Player(in, out);
         commands.put("NEWPL", this::treatNEWPLRequest);
         commands.put("REGIS", this::treatREGISRequest);
         commands.put("UNREG", this::treatUNREGRequest);
@@ -45,7 +45,7 @@ public class WelcomePlayerService implements Runnable {
             request = readRequest(this.in);
             if (request == null) { // the client is disconnected
                 // remove the player from the list of players
-                ServerImpl.INSTANCE.removeConnectedPlayer(this.player.getId());
+//                ServerImpl.INSTANCE.removeConnectedPlayer(this.player.getId());
                 // remove the player from the game where he was
                 if (this.player.getGame() != null) {
                     this.player.getGame().removePlayer(this.player);
@@ -90,7 +90,7 @@ public class WelcomePlayerService implements Runnable {
             game.addPlayer(this.player);
             this.player.setGame(game);
             ServerImpl.INSTANCE.addNotStartedGame(game);
-            this.out.printf("REGOK %c***", game.getId()); // send REGOK m
+            this.out.printf("REGOK %d***", game.getId()); // send REGOK m
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -158,12 +158,12 @@ public class WelcomePlayerService implements Runnable {
             // send SIZE! m h w***
             short h = g.getLabyrinthWidth();
             short w = g.getLabyrinthHeight();
-            byte[] b1 = new byte[2], b2 = new byte[2];
-            b1[0] = (byte) h;
-            b1[1] = (byte) (h >> 8);
-            b2[0] = (byte) w;
-            b2[1] = (byte) (w >> 8);
-            this.out.printf("SIZE! %c %c%c %c%c***", m, b1[0], b1[1], b2[0], b2[1]);
+            byte h0, h1, w0, w1;
+            h0 = (byte) h; // lowest weight byte
+            h1 = (byte) (h >> 8); // strongest weight byte
+            w0 = (byte) w; // lowest weight byte
+            w1 = (byte) (w >> 8); // strongest weight byte
+            this.out.printf("SIZE! %d %d%d %d%d***", m, h0, h1, w0, w1);
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -183,7 +183,7 @@ public class WelcomePlayerService implements Runnable {
                 throw new Exception("Game does not exist");
             }
             this.out.printf("LIST! %d %d***", m, g.getNbPlayers());
-            g.forEachPlayer(p -> this.out.printf("PLAYR %s***", p.getId()));
+            g.forEachPlayer(p -> p.sendPLAYR(this.out));
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -196,9 +196,9 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 1) {
                 throw new Exception("GAMES request must have 0 arguments");
             }
-            this.out.printf("GAMES %c***", (char) ServerImpl.INSTANCE.nbNotStartedGames());
+            this.out.printf("GAMES %d***", ServerImpl.INSTANCE.nbNotStartedGames());
             // send n OGAME
-            ServerImpl.INSTANCE.forEachNotStartedGame(g -> this.out.printf("OGAME %c %c***", g.getId(), g.getNbPlayers()));
+            ServerImpl.INSTANCE.forEachNotStartedGame(g -> g.sendOGAME(this.out));
         } catch (Exception e) {
             e.printStackTrace();
             sendDUNNO();
@@ -207,18 +207,19 @@ public class WelcomePlayerService implements Runnable {
 
     private void treatSTARTRequest(String[] args) {
         // block the player, make him wait, how? (ignore his messages)
-//        try {
-//            if (args.length != 1) {
-//                throw new Exception("START request must have 0 arguments");
-//            }
-//            Game g = this.player.getGame();
-//            if (g == null) {
-//                throw new Exception("Player is not in a game");
-//            }
-//            this.player.sendSTART();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            sendDUNNO();
-//        }
+        try {
+            if (args.length != 1) {
+                throw new Exception("START request must have 0 arguments");
+            }
+            Game g = this.player.getGame();
+            if (g == null) {
+                throw new Exception("Player is not in a game");
+            }
+            // TODO: block the player
+            this.player.sendSTART();
+        } catch (Exception e) {
+            e.printStackTrace();
+            sendDUNNO();
+        }
     }
 }
