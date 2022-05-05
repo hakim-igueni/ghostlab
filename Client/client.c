@@ -16,6 +16,9 @@ int main()
     // char buffer[BUFFER_SIZE];
     // uint8_t n, m, s;
     uint8_t games[255];
+    uint8_t n;
+    int udpsocket_fd;
+    char buffer[BUFFER_SIZE];
 
     // Adresse de la socket client
     struct sockaddr_in socket_adr = {
@@ -44,7 +47,7 @@ int main()
     }
 
     printf("[---Connexion au serveur réussie---]\n");
-    recv_GAMES(tcpsocket_fd, games);
+    recv_GAMES(tcpsocket_fd, games, &n);
 
     // -------------------Créer une nouvelle partie------------------------
     printf("\n[---Création d'une nouvelle partie---]\n");
@@ -53,7 +56,7 @@ int main()
 
     // -------------------Demande de la liste des parties------------------
     printf("\n[---Demande de la liste des parties---]\n");
-    send_GAME_request(tcpsocket_fd, games);
+    send_GAME_request(tcpsocket_fd, games, &n);
     // sleep(20);
 
     // ------------------Se désinscrire d'une partie-----------------------
@@ -63,7 +66,7 @@ int main()
 
     // -------------------Demande de la liste des parties------------------
     printf("\n[---Demande de la liste des parties---]\n");
-    send_GAME_request(tcpsocket_fd, games);
+    send_GAME_request(tcpsocket_fd, games, &n);
 
     // ------------------Rejoindre une partie------------------------------
     printf("\n[---Rejoindre une partie---]\n");
@@ -72,7 +75,7 @@ int main()
 
     // -------------------Demande de la liste des parties------------------
     printf("\n[---Demande de la liste des parties---]\n");
-    send_GAME_request(tcpsocket_fd, games);
+    send_GAME_request(tcpsocket_fd, games, &n);
 
     // -------------Demande de la taille du labyrinthe-------------------
     // printf("\n[---Demande de la taille du labyrinthe---]\n");
@@ -87,7 +90,11 @@ int main()
     // Start the game
     printf("\n[---Début de la partie---]\n");
     send_START_request(tcpsocket_fd);
-    recv_WELCO(tcpsocket_fd);
+    recv_WELCO(tcpsocket_fd, &udpsocket_fd);
+    memset(buffer, 0, BUFFER_SIZE);
+    recv(tcpsocket_fd, buffer, BUFFER_SIZE, 0);
+    printf("[---Message recu après l'abonnement---]\n");
+    printf("%s\n", buffer);
     // sleep(10);
 
     //

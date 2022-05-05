@@ -3,7 +3,7 @@
 
 #include "utils.h"
 
-void recv_WELCO(int tcpsocket_fd);
+void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd);
 void recv_POSIT(int tcpsocket_fd, uint16_t *x, uint16_t *y);
 void recv_MOVE(int tcpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p);
 void send_UPMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uint16_t *p);

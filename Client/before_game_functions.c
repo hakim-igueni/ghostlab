@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "before_game_functions.h"
-void recv_GAMES(int tcpsocket_fd, uint8_t *games)
+
+void recv_GAMES(int tcpsocket_fd, uint8_t *games, uint8_t *n)
 {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
@@ -21,12 +22,12 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games)
     }
 
     // Récupération du nombre de parties
-    uint8_t n, m, s;
-    n = (uint8_t)buffer[6];
-    printf("[recv_GAMES] Nombre de parties : %d\n\n", n);
+    uint8_t m, s;
+    *n = (uint8_t)buffer[6];
+    printf("[recv_GAMES] Nombre de parties : %d\n\n", *n);
 
     // Récupupération des parties
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < *n; i++)
     {
         // Reinitiation du buffer
         memset(buffer, 0, BUFFER_SIZE);
@@ -38,7 +39,7 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games)
                               buffer, 12, 0);
         if (received_bytes == -1)
         {
-            perror("read");
+            perror("[recv_GAMES] read");
             exit(EXIT_FAILURE);
         }
         buffer[received_bytes] = '\0';
@@ -50,13 +51,13 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games)
     }
 }
 
-void send_GAME_request(int tcpsocket_fd, uint8_t *games)
+void send_GAME_request(int tcpsocket_fd, uint8_t *games, uint8_t *n)
 {
     char buffer[BUFFER_SIZE];
     // Envoi du message "GAME?***"
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "GAME?***");
-    printf("Le message à envoyer au serveur : %s\n", buffer);
+    printf("[GAME] Le message à envoyer au serveur : %s\n", buffer);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
     {
@@ -64,7 +65,7 @@ void send_GAME_request(int tcpsocket_fd, uint8_t *games)
         exit(EXIT_FAILURE);
     }
     // Récupération des parties
-    recv_GAMES(tcpsocket_fd, games);
+    recv_GAMES(tcpsocket_fd, games, n);
 }
 
 void send_NEWPL_request(int tcpsocket_fd)
@@ -89,19 +90,19 @@ void send_NEWPL_request(int tcpsocket_fd)
     int received_bytes = recv(tcpsocket_fd, buffer, 10, 0);
     if (received_bytes == -1)
     {
-        perror("read");
+        perror("[NEWPL] read");
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
     if (strncmp(buffer, "REGOK", 5) == 0)
     {
         uint8_t m = (uint8_t)buffer[6];
-        printf("L'identifiant de la nouvelle partie est %d\n", m);
+        printf("[NEWPL] L'identifiant de la nouvelle partie est %d\n", m);
     }
     else
     {
         puts(buffer);
-        printf("L'inscription n'est pas prise en compte\n");
+        printf("[NEWPL] L'inscription n'est pas prise en compte\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -112,7 +113,7 @@ void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m)
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "REGIS %s %s %c***", username, port, m);
-    printf("Le message à envoyer au serveur : %s\n", buffer);
+    printf("[REGIS] Le message à envoyer au serveur : %s\n", buffer);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
     {
@@ -129,23 +130,27 @@ void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m)
     }
     if (strncmp(buffer, "REGOK", 5) == 0)
     {
-        printf("L'inscription est prise en compte\n");
+        printf("[REGIS] L'inscription est prise en compte\n");
         received_bytes += recv(tcpsocket_fd, buffer + 5, 5, 0);
         if (received_bytes == -1)
         {
             perror("[REGIS] read");
             exit(EXIT_FAILURE);
         }
-        // char m_char = (char)buffer[6];
-        // if (m_char == m)
-        // {
-        //     printf("[REGIS] L'inscription est faite dans une autre partie\n");
-        // }
+        u_int8_t m_char = (u_int8_t)buffer[6];
+        if (m_char == m)
+        {
+            printf("[REGIS] L'inscription est faite dans la partie %d\n", m);
+        }
+        else
+        {
+            printf("[REGIS] L'inscription n'est pas faite dans la partie %d\n", m);
+        }
     }
     else
     {
         puts(buffer);
-        printf("L'inscription n'est pas prise en compte\n");
+        printf("[REGIS] L'inscription n'est pas prise en compte\n");
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
@@ -161,16 +166,28 @@ void send_UNREG_request(int tcpsocket_fd)
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
     {
-        perror("send");
+        perror("[UNREG] send");
         exit(EXIT_FAILURE);
     }
     // Recevoir la reponse du serveur
     memset(buffer, 0, BUFFER_SIZE);
-    int received_bytes = recv(tcpsocket_fd, buffer, BUFFER_SIZE, 0);
+    int received_bytes = recv(tcpsocket_fd, buffer, 5, 0);
     if (received_bytes == -1)
     {
         perror("[UNREG] read");
         exit(EXIT_FAILURE);
+    }
+    if (strncmp(buffer, "UNROK", 5) == 0)
+    {
+        // recevoir la suite du message "UNROK m***" càd " m***"
+        received_bytes += recv(tcpsocket_fd, buffer + 5, 5, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UNREG] read");
+            exit(EXIT_FAILURE);
+        }
+        uint8_t m = (uint8_t)buffer[6];
+        printf("[UNREG] Le joueur s'est désinscri de la partie %d\n", m);
     }
     buffer[received_bytes] = '\0';
     printf("[UNREG] La réponse du serveur : %s\n", buffer);
