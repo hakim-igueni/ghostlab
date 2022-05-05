@@ -17,7 +17,7 @@ public class Labyrinth {
         tab[3] = "0010011".toCharArray();
         tab[4] = "1000001".toCharArray();
         tab[5] = "1111101".toCharArray();
-        afficheLabyrinthe();
+//        afficheLabyrinthe();
     }
 
     public short getHeight() {

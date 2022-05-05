@@ -44,8 +44,6 @@ public class WelcomePlayerService implements Runnable {
         while (true) { // while the player is still connected
             request = readRequest(this.in);
             if (request == null) { // the client is disconnected
-                // remove the player from the list of players
-//                ServerImpl.INSTANCE.removeConnectedPlayer(this.player.getId());
                 // remove the player from the game where he was
                 if (this.player.getGame() != null) {
                     this.player.getGame().removePlayer(this.player);
@@ -83,16 +81,25 @@ public class WelcomePlayerService implements Runnable {
             if (isInvalidPort(args[2])) {
                 throw new Exception("Port must have 4 digits");
             }
+            if (this.player.getGame() != null) {
+                System.out.printf("[Req-NEWPL] Error: Player %s is already in a game\n\n", this.player.getId());
+                this.out.printf("REGNO***");
+                return;
+            }
             int port = Integer.parseInt(args[2]);
             this.player.setId(args[1]); // TODO: check if the id is already used, if so, send an error REGNO
             this.player.setPort(port);
             Game game = new Game();
             game.addPlayer(this.player);
+            System.out.printf("[Req-NEWPL] Player %s requested to create a new game\n", this.player.getId());
             this.player.setGame(game);
             ServerImpl.INSTANCE.addNotStartedGame(game);
-            this.out.printf("REGOK %c***", game.getId()); // send REGOK m***
+
+            // send REGOK m***
+            this.out.printf("REGOK %c***", game.getId());
+            System.out.printf("[Ans-NEWPL] Player %s successfully created a new game and joined it\n\n", this.player.getId());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-NEWPL] Error: %s\n\n", e.getMessage());
             sendDUNNO();
         }
     }
@@ -103,22 +110,36 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 4) {
                 throw new Exception("REGIS request must have 3 arguments: REGIS id port m");
             }
-            String id = args[1]; // TODO: check if the id is already used, if so, send an error REGNO
-            if (isInvalidId(id)) {
+            if (isInvalidId(args[1])) {
                 throw new Exception("ID must have 8 alphanumeric characters");
             }
+            if (isInvalidPort(args[2])) {
+                throw new Exception("Port must have 4 digits");
+            }
+            if (this.player.getGame() != null) {
+                System.out.printf("[Req-REGIS] Error: Player %s is already in a game\n\n", this.player.getId());
+                this.out.printf("REGNO***");
+                return;
+            }
+            String id = args[1]; // TODO: check if the id is already used, if so, send an error REGNO
             int port = Integer.parseInt(args[2]);
             this.player.setId(id);
             this.player.setPort(port);
             byte m = args[3].getBytes()[0]; // TODO: check if args[3] is a single byte
+            System.out.printf("[Req-REGIS] Player %s is trying to join game %d\n", id, m);
             if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
+                System.out.printf("[Req-REGIS] Error: Game %d is already started\n", m);
                 this.out.printf("REGNO***");
                 return;
             }
             ServerImpl.INSTANCE.addPlayerToGame(this.player, m);
-            this.out.printf("REGOK %c***", m); // send REGOK m
+            this.player.setGame(ServerImpl.INSTANCE.getGame(m));
+
+            // send REGOK m***
+            this.out.printf("REGOK %c***", m);
+            System.out.printf("[Ans-REGIS] Player %s joined game %d\n\n", id, m);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-REGIS] Error: %s\n\n", e.getMessage());
             sendDUNNO();
         }
     }
@@ -126,6 +147,7 @@ public class WelcomePlayerService implements Runnable {
     private void treatUNREGRequest(String[] args) {
         // UNREG***
         try {
+            System.out.printf("[Req-UNREG] Player %s requested to unregister\n", this.player.getId());
             if (args.length != 1) { // TODO: see what happens when the player sends [UNREG ***] (a space after UNREG)
                 throw new Exception("UNREG request must have 0 arguments");
             }
@@ -134,10 +156,12 @@ public class WelcomePlayerService implements Runnable {
                 sendDUNNO();
                 return;
             }
+
             // send UNROK m***
             this.out.printf("UNROK %c***", m);
+            System.out.printf("[Ans-UNREG] Player %s unregistered from game %d\n\n", this.player.getId(), m);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-UNREG] Error: %s\n\n", e.getMessage());
             sendDUNNO();
         }
     }
@@ -154,6 +178,7 @@ public class WelcomePlayerService implements Runnable {
             if (g == null) {
                 throw new Exception("Game does not exist");
             }
+            System.out.printf("[Req-SIZE?] Player %s requested labyrinth size of game %d\n", this.player.getId(), m);
 
             // send SIZE! m h w***
             short h = g.getLabyrinthWidth();
@@ -164,8 +189,9 @@ public class WelcomePlayerService implements Runnable {
             w0 = (byte) w; // lowest weight byte
             w1 = (byte) (w >> 8); // strongest weight byte
             this.out.printf("SIZE! %c %c%c %c%c***", m, h0, h1, w0, w1); // send SIZE! m h w***
+            System.out.printf("[Ans-SIZE?] Labyrinth size: (w=%d, h=%d) of game %d sent to player %s\n\n", w, h, m, this.player.getId());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-SIZE?] Error: %s\n\n", e.getMessage());
             sendDUNNO();
         }
     }
@@ -178,14 +204,23 @@ public class WelcomePlayerService implements Runnable {
             }
             //check if the game exists
             byte m = args[1].getBytes()[0]; // TODO: check if args[1] is a single byte
+            System.out.printf("[Req-LIST?] Player %s requested list of players of game %d\n", this.player.getId(), m);
             Game g = ServerImpl.INSTANCE.getGame(m);
             if (g == null) {
                 throw new Exception("Game does not exist");
             }
-            this.out.printf("LIST! %c %d***", m, g.getNbPlayers()); // send LIST! m s***
-            g.forEachPlayer(p -> p.sendPLAYR(this.out));
+
+            // send LIST! m s***
+            this.out.printf("LIST! %c %c***", m, g.getNbPlayers());
+            System.out.printf("[Ans-LIST?] List of players of game %d sent to player %s\n", m, this.player.getId());
+            g.forEachPlayer(p -> {
+                p.sendPLAYR(this.out);
+                System.out.printf("[Ans-LIST?] PLAYR %s\n", p.getId());
+            });
+
+            System.out.println();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-LIST?] Error: %s\n\n", e.getMessage());
             sendDUNNO();
         }
     }
@@ -196,29 +231,40 @@ public class WelcomePlayerService implements Runnable {
             if (args.length != 1) {
                 throw new Exception("GAMES request must have 0 arguments");
             }
+            System.out.printf("[Req-GAMES] Player %s requested list of not started games\n", this.player.getId());
+
+            // send GAMES n
             this.out.printf("GAMES %c***", ServerImpl.INSTANCE.nbNotStartedGames());
             // send n OGAME
-            ServerImpl.INSTANCE.forEachNotStartedGame(g -> g.sendOGAME(this.out));
+            System.out.printf("[Ans-GAMES] List of not started games sent to player %s\n", this.player.getId());
+            ServerImpl.INSTANCE.forEachNotStartedGame(g -> {
+                g.sendOGAME(this.out);
+                System.out.printf("[Ans-GAMES] OGAME %d %d\n", g.getId(), g.getNbPlayers());
+            });
+            System.out.println();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-GAMES] Error: %s\n\n", e.getMessage());
             sendDUNNO();
         }
     }
 
     private void treatSTARTRequest(String[] args) {
-        // block the player, make him wait, how? (ignore his messages)
+        // block the player, make him wait, how? (ignore his messages maybe?)
         try {
             if (args.length != 1) {
                 throw new Exception("START request must have 0 arguments");
             }
+            System.out.printf("[Req-START] Player %s requested to start a game\n", this.player.getId());
             Game g = this.player.getGame();
             if (g == null) {
                 throw new Exception("Player is not in a game");
             }
             // TODO: block the player
-            this.player.start();
+            System.out.printf("[Ans-START] Player %s is waiting for game %d to start\n", this.player.getId(), g.getId());
+            this.player.waitForGameToStart();
+            System.out.printf("[Ans-START] Player %s is now in game %d\n", this.player.getId(), g.getId());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.printf("[Req-START] Error: %s\n", e.getMessage());
             sendDUNNO();
         }
     }

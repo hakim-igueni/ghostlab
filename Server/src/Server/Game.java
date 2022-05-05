@@ -35,15 +35,22 @@ public class Game {
         return started;
     }
 
-    public synchronized void incrNbPlayersWhoSentSTART() {
+    public synchronized void incrNbPlayersWhoSentSTARTAndWait() {
         nbPlayersWhoSentSTART++;
         if (nbPlayersWhoSentSTART == players.size()) {
             startGame();
         }
+        try {
+            System.out.println(Thread.currentThread().getName() + ": waiting for game to start");
+            wait(); // wait for other players to send START to start the game
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void startGame() {
+    public synchronized void startGame() {
         this.started = true;
+        notifyAll();
         GameManager gameManager = new GameManager(this);
         this.gameManagerThread = new Thread(gameManager); // TODO: check if we really need an attribute for this
         this.gameManagerThread.start();

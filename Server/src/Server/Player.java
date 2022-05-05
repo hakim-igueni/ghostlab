@@ -42,13 +42,10 @@ public class Player {
         return hasSentSTART;
     }
 
-    public void start() {
+    public void waitForGameToStart() {
         this.hasSentSTART = true;
-        if (this.game != null) {
-            this.game.incrNbPlayersWhoSentSTART();
-        }
+        this.game.incrNbPlayersWhoSentSTARTAndWait();
     }
-
 
     public boolean unsubscribe() {
         if (this.game != null) {

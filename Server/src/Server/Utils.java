@@ -28,7 +28,7 @@ public class Utils {
                 }
             } while ((c = inSR.read()) != -1);
         } catch (IOException e) {
-            e.printStackTrace();
+            return null;
         }
         String req = sb.toString();
         if (req.length() > 3) {
