@@ -7,9 +7,9 @@ import java.util.function.Consumer;
 public class Game {
     private volatile static byte nbGames = 0;
     private final HashMap<String, Player> players = new HashMap<>();
+    private final HashMap<String, Player> playersWhoDidntSendSTART = new HashMap<>();
     private final Labyrinth labyrinth;
     private final byte id;
-    private byte nbPlayersWhoSentSTART = 0;
     private boolean started = false;
     private Thread gameManagerThread;
 
@@ -35,16 +35,21 @@ public class Game {
         return started;
     }
 
-    public synchronized void incrNbPlayersWhoSentSTARTAndWait() {
-        nbPlayersWhoSentSTART++;
-        if (nbPlayersWhoSentSTART == players.size()) {
-            startGame();
+    public synchronized void pressSTARTAndWait(Player player) {
+        if (started) {
+            return;
         }
-        try {
-            System.out.println(Thread.currentThread().getName() + ": waiting for game to start");
-            wait(); // wait for other players to send START to start the game
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        playersWhoDidntSendSTART.remove(player.getId());
+
+        if (playersWhoDidntSendSTART.size() == players.size()) {
+            startGame();
+        } else{
+            try {
+                System.out.println("[Thread " + Thread.currentThread().getName() + "] Waiting for game to start");
+                wait(); // wait for other players to send START to start the game
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -75,12 +80,15 @@ public class Game {
     public void removePlayer(Player player) {
         players.remove(player.getId());
         if (player.hasSentSTART()) {
-            nbPlayersWhoSentSTART--;
+            playersWhoDidntSendSTART.remove(player.getId());
         }
     }
 
     public void addPlayer(Player player) {
         players.put(player.getId(), player);
+        if (!player.hasSentSTART()) {
+            playersWhoDidntSendSTART.put(player.getId(), player);
+        }
     }
 
     public void sendOGAME(PrintWriter out) {

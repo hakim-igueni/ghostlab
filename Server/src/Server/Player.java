@@ -44,7 +44,7 @@ public class Player {
 
     public void waitForGameToStart() {
         this.hasSentSTART = true;
-        this.game.incrNbPlayersWhoSentSTARTAndWait();
+        this.game.pressSTARTAndWait(this);
     }
 
     public boolean unsubscribe() {
