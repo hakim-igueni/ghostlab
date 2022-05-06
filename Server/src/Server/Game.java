@@ -38,7 +38,7 @@ public class Game {
     public synchronized void removeFromPlayersWhoDidntSendSTART(Player player) {
         playersWhoDidntSendSTART.remove(player.getId());
 
-        if (playersWhoDidntSendSTART.size() == players.size()) {
+        if (playersWhoDidntSendSTART.size() == 0) {
             startGame();
         }
     }
