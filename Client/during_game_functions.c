@@ -28,7 +28,7 @@ void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
         *p = '\0';
     }
     uint16_t port = (uint16_t)strtol(buffer + 32, NULL, 10);
-    // TODO: s'abonner à l'adresse ip recu
+
     // s'abonner à l'adresse ip recu
     *udpsocket_fd = socket(PF_INET, SOCK_DGRAM, 0);
     int ok = 1;
@@ -314,9 +314,103 @@ void send_IQUIT(int tcpsocket_fd)
     int received_bytes = recv(tcpsocket_fd, buffer, 8, 0);
     if (received_bytes == -1)
     {
-        perror("[GOBYE] read");
+        perror("[IQUIT] read");
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
     close(tcpsocket_fd);
+}
+
+void recv_UDP(int udpsocket_fd)
+{
+    // Recevoir les messages UDP
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    int received_bytes = recv(udpsocket_fd, buffer, 5, 0);
+    if (received_bytes == -1)
+    {
+        perror("[UDP] read");
+        exit(EXIT_FAILURE);
+    }
+    if (strncmp(buffer, "GHOST", 5) == 0) // si le message est "GHOST␣x␣y+++"
+    {
+        received_bytes += recv(udpsocket_fd, buffer + 5, 11, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UDP] read");
+            exit(EXIT_FAILURE);
+        }
+        buffer[received_bytes] = '\0';
+        uint16_t x, y;
+        x = (uint16_t)strtol(buffer + 5, NULL, 10);
+        y = (uint16_t)strtol(buffer + 8, NULL, 10);
+        printf("[UDP] GHOST␣x␣y+++ : x = %d, y = %d\n", x, y);
+    }
+    else if (strncmp(buffer, "SCORE", 5) == 0) // si le message est "SCORE␣id␣p␣x␣y+++"
+    {
+        received_bytes += recv(udpsocket_fd, buffer + 5, 26, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UDP] read");
+            exit(EXIT_FAILURE);
+        }
+        buffer[received_bytes] = '\0';
+        char id[9];
+        strncpy(id, buffer + 6, 8);
+        uint16_t x, y, p;
+        p = (uint16_t)strtol(buffer + 15, NULL, 10);
+        x = (uint16_t)strtol(buffer + 20, NULL, 10);
+        y = (uint16_t)strtol(buffer + 24, NULL, 10);
+        printf("[UDP] SCORE␣id␣p␣x␣y+++ : id = %s, p = %d, x = %d, y = %d\n", id, p, x, y);
+    }
+    else if (strncmp(buffer, "MESSA", 5) == 0) // si le message est "MESSA␣id␣mess+++"
+    {
+        received_bytes += recv(udpsocket_fd, buffer + 5, 213, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UDP] read");
+            exit(EXIT_FAILURE);
+        }
+        buffer[received_bytes] = '\0';
+        char id[9];
+        strncpy(id, buffer + 6, 8);
+        char mess[200];
+        strcpy(mess, buffer + 15);
+        printf("[UDP] MESSA␣id␣mess+++ : id = %s, mess = %s\n", id, mess);
+    }
+    else if (strncmp(buffer, "MESSP", 5) == 0) // si le message est "MESSP␣id␣mess+++"
+    {
+        received_bytes += recv(udpsocket_fd, buffer + 5, 213, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UDP] read");
+            exit(EXIT_FAILURE);
+        }
+        buffer[received_bytes] = '\0';
+        char id[9];
+        strncpy(id, buffer + 6, 8);
+        char mess[200];
+        strcpy(mess, buffer + 15);
+        printf("[UDP] MESSP␣id␣mess+++ : id = %s, mess = %s\n", id, mess);
+    }
+    else if (strncmp(buffer, "ENDGA", 5) == 0) // si le message est "ENDGA␣id␣p+++"
+    {
+        received_bytes += recv(udpsocket_fd, buffer + 5, 16, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UDP] read");
+            exit(EXIT_FAILURE);
+        }
+        buffer[received_bytes] = '\0';
+        char id[9];
+        strncpy(id, buffer + 6, 8);
+        uint16_t p;
+        p = (uint16_t)strtol(buffer + 15, NULL, 10);
+        printf("[UDP] ENDGA␣id␣p+++ : id = %s, p = %d\n", id, p);
+        // TODO: fermer la connexion UDP et deconnecter le joueur
+    }
+    else
+    {
+        printf("[UDP] %s\n", buffer);
+    }
 }
