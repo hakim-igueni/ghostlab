@@ -12,7 +12,7 @@ public class Server {
             while (true) {
                 // TODO: make sure that both h and w don't exceed the 1000 (so < 1000)
                 Socket socket = server.accept();
-                WelcomePlayerService welcomePlayerServ = new WelcomePlayerService(socket);
+                PlayerThread welcomePlayerServ = new PlayerThread(socket);
                 Thread t = new Thread(welcomePlayerServ);
                 t.start();
             }

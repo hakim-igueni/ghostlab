@@ -42,22 +42,9 @@ public class Player {
         return hasSentSTART;
     }
 
-    public void waitForGameToStart() {
+    public void pressSTART() {
         this.hasSentSTART = true;
-        this.game.pressSTARTAndWait(this);
-    }
-
-    public boolean unsubscribe() {
-        if (this.game != null) {
-            this.game.removePlayer(this);
-            // remove the game if it has no players left
-            if (this.game.getNbPlayers() == 0) {
-                ServerImpl.INSTANCE.removeGame(this.game);
-            }
-            this.game = null;
-            return true;
-        }
-        return false;
+        this.game.removeFromPlayersWhoDidntSendSTART(this);
     }
 
     public int getPort(int port) {
@@ -91,6 +78,19 @@ public class Player {
 
     public void sendPLAYR(PrintWriter dest) {
         dest.printf("PLAYR %s***", this.id);
+    }
+
+    public boolean unsubscribe() {
+        if (this.game != null) {
+            this.game.removePlayer(this);
+            // remove the game if it has no players left
+            if (this.game.getNbPlayers() == 0) {
+                ServerImpl.INSTANCE.removeGame(this.game);
+            }
+            this.game = null;
+            return true;
+        }
+        return false;
     }
 }
 

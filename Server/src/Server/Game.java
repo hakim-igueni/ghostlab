@@ -35,27 +35,16 @@ public class Game {
         return started;
     }
 
-    public synchronized void pressSTARTAndWait(Player player) {
-        if (started) {
-            return;
-        }
+    public synchronized void removeFromPlayersWhoDidntSendSTART(Player player) {
         playersWhoDidntSendSTART.remove(player.getId());
 
         if (playersWhoDidntSendSTART.size() == players.size()) {
             startGame();
-        } else{
-            try {
-                System.out.println("[Thread " + Thread.currentThread().getName() + "] Waiting for game to start");
-                wait(); // wait for other players to send START to start the game
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 
     public synchronized void startGame() {
         this.started = true;
-        notifyAll();
         GameManager gameManager = new GameManager(this);
         this.gameManagerThread = new Thread(gameManager); // TODO: check if we really need an attribute for this
         this.gameManagerThread.start();

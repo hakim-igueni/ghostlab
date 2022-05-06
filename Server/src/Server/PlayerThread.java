@@ -10,23 +10,24 @@ import java.util.function.Consumer;
 
 import static Server.Utils.readRequest;
 
-public class WelcomePlayerService implements Runnable {
-    private final HashMap<String, Consumer<String[]>> commands = new HashMap<>();
+public class PlayerThread implements Runnable {
+    private final HashMap<String, Consumer<String[]>> beforeGameSTARTCommands = new HashMap<>();
+    private final HashMap<String, Consumer<String[]>> afterGameSTARTCommands = new HashMap<>();
     private final PrintWriter out;
     private final InputStreamReader in;
     private final Player player;
 
-    public WelcomePlayerService(Socket s) throws IOException {
+    public PlayerThread(Socket s) throws IOException {
         this.out = new PrintWriter(new OutputStreamWriter(s.getOutputStream()), true);
         this.in = new InputStreamReader(s.getInputStream());
         this.player = new Player(in, out);
-        commands.put("NEWPL", this::treatNEWPLRequest);
-        commands.put("REGIS", this::treatREGISRequest);
-        commands.put("UNREG", this::treatUNREGRequest);
-        commands.put("SIZE?", this::treatSIZERequest);
-        commands.put("GAME?", this::treatGAMERequest);
-        commands.put("LIST?", this::treatLISTRequest);
-        commands.put("START", this::treatSTARTRequest);
+        beforeGameSTARTCommands.put("NEWPL", this::treatNEWPLRequest);
+        beforeGameSTARTCommands.put("REGIS", this::treatREGISRequest);
+        beforeGameSTARTCommands.put("UNREG", this::treatUNREGRequest);
+        beforeGameSTARTCommands.put("SIZE?", this::treatSIZERequest);
+        beforeGameSTARTCommands.put("GAME?", this::treatGAMERequest);
+        beforeGameSTARTCommands.put("LIST?", this::treatLISTRequest);
+        beforeGameSTARTCommands.put("START", this::treatSTARTRequest);
     }
 
     private void sendDUNNO() {
@@ -41,22 +42,28 @@ public class WelcomePlayerService implements Runnable {
         // send GAMES n
         treatGAMERequest(args);
 
-        while (true) { // while the player is still connected
+        // before game starts
+        while (!this.player.hasSentSTART()) { // while the player is still connected and didn't send START
             request = readRequest(this.in);
             if (request == null) { // the client is disconnected
-                // remove the player from the game where he was
-                if (this.player.getGame() != null) {
-                    this.player.getGame().removePlayer(this.player);
-
-                    // remove the game if it has no players left
-                    if (this.player.getGame().getNbPlayers() == 0) {
-                        ServerImpl.INSTANCE.removeGame(this.player.getGame());
-                    }
-                }
-                break;
+                System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
+                this.player.unsubscribe();
+                return; // exit the thread
             }
             args = request.split(" "); // TODO: check if the method split does exactly what we want
-            commands.getOrDefault(args[0], (a -> sendDUNNO())).accept(args);
+            beforeGameSTARTCommands.getOrDefault(args[0], (a -> sendDUNNO())).accept(args);
+        }
+
+        // after game starts
+        while (true) {
+            request = readRequest(this.in);
+            if (request == null) { // the client is disconnected
+                System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
+                this.player.unsubscribe();
+                return; // exit the thread
+            }
+            args = request.split(" ");
+            afterGameSTARTCommands.getOrDefault(args[0], (a -> sendDUNNO())).accept(args);
         }
     }
 
@@ -261,7 +268,7 @@ public class WelcomePlayerService implements Runnable {
             }
             // TODO: block the player
             System.out.printf("[Ans-START] Player %s is waiting for game %d to start\n", this.player.getId(), g.getId());
-            this.player.waitForGameToStart();
+            this.player.pressSTART();
             System.out.printf("[Ans-START] Player %s is now in game %d\n", this.player.getId(), g.getId());
         } catch (Exception e) {
             System.out.printf("[Req-START] Error: %s\n", e.getMessage());
