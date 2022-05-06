@@ -43,6 +43,12 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games, uint8_t *n)
             exit(EXIT_FAILURE);
         }
         buffer[received_bytes] = '\0';
+        if (strncmp(buffer, "OGAME", 5) != 0)
+        {
+            printf("[recv_GAMES] Erreur: Le message du serveur ne commence pas par OGAME\n");
+            exit(EXIT_FAILURE);
+        }
+
         // printf("Le message envoyé par le serveur : %s\n", buffer);
         m = (uint8_t)buffer[6];
         s = (uint8_t)buffer[8];
@@ -68,12 +74,12 @@ void send_GAME_request(int tcpsocket_fd, uint8_t *games, uint8_t *n)
     recv_GAMES(tcpsocket_fd, games, n);
 }
 
-void send_NEWPL_request(int tcpsocket_fd)
+void send_NEWPL_request(int tcpsocket_fd, char *username, char *port)
 {
     // Envoi du message "NEWPL id port***" pour créer une nouvelle partie
     // TODO: Generer les username aléatoirement
-    char *username = "username";
-    char *port = "2121";
+    // char *username = "username";
+    // char *port = "2121";
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "NEWPL %s %s***", username, port);
@@ -223,7 +229,7 @@ void send_LIST_request(int tcpsocket_fd)
     // Envoi du message "LIST? m***" pour connaitre la liste des joueurs
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    char m_char = '1';
+    uint8_t m_char = 1;
     sprintf(buffer, "LIST? %c***", m_char);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
@@ -240,6 +246,7 @@ void send_LIST_request(int tcpsocket_fd)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
+    printf("[LIST] La réponse du serveur : %s\n", buffer);
     // uint8_t m = (uint8_t)buffer[6];
     uint8_t s = (uint8_t)buffer[8];
     for (int i = 0; i < s; i++)

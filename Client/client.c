@@ -51,7 +51,7 @@ int main()
 
     // -------------------Créer une nouvelle partie------------------------
     printf("\n[---Création d'une nouvelle partie---]\n");
-    send_NEWPL_request(tcpsocket_fd);
+    send_NEWPL_request(tcpsocket_fd, "username", "2121");
     // sleep(10);
 
     // -------------------Demande de la liste des parties------------------
@@ -83,8 +83,8 @@ int main()
     // sleep(10);
 
     // -------------Demande de la liste des joueurs-------------------
-    // printf("\n[---Demande de la liste des joueurs---]\n");
-    // send_LIST_request(tcpsocket_fd);
+    printf("\n[---Demande de la liste des joueurs---]\n");
+    send_LIST_request(tcpsocket_fd);
     // sleep(10);
 
     // Start the game
@@ -92,7 +92,7 @@ int main()
     send_START_request(tcpsocket_fd);
     recv_WELCO(tcpsocket_fd, &udpsocket_fd);
     memset(buffer, 0, BUFFER_SIZE);
-    recv(tcpsocket_fd, buffer, BUFFER_SIZE, 0);
+    recv(udpsocket_fd, buffer, BUFFER_SIZE, 0);
     printf("[---Message recu après l'abonnement---]\n");
     printf("%s\n", buffer);
     // sleep(10);
