@@ -264,7 +264,7 @@ void send_LIST_request(int tcpsocket_fd)
     }
 }
 
-void send_START_request(int tcpsocket_fd)
+void send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16_t *y)
 {
     // Envoie du message START pour commencer la partie
     char buffer[BUFFER_SIZE];
@@ -278,4 +278,84 @@ void send_START_request(int tcpsocket_fd)
         exit(EXIT_FAILURE);
     }
     // Comment va se dérouler la partie ?
+    recv_WELCO(tcpsocket_fd, udpsocket_fd);
+    recv_POSIT(tcpsocket_fd, x, y);
+}
+
+void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
+{
+    // Recevoir le message de bienvenue sous la forme "WELCO m h w f ip port***"
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    printf("[WELCO] Attente de la réponse du serveur...\n");
+    int received_bytes = recv(tcpsocket_fd, buffer, 39, 0);
+    if (received_bytes == -1)
+    {
+        perror("[WELCO] read");
+        exit(EXIT_FAILURE);
+    }
+    buffer[received_bytes] = '\0';
+    printf("[WELCO] La réponse du serveur : %s\n", buffer);
+    // uint8_t m = (uint8_t)buffer[6];
+    // uint16_t h = (uint16_t)strtol(buffer + 8, NULL, 10);
+    // uint16_t w = (uint16_t)strtol(buffer + 11, NULL, 10);
+    // uint8_t f = (uint8_t)buffer[14];
+    char ip[16];
+    strncpy(ip, buffer + 16, 15);
+    // supprimer les # à la fin de l'ip
+    char *p = strchr(ip, '#');
+    if (p != NULL)
+    {
+        *p = '\0';
+    }
+    uint16_t port = (uint16_t)strtol(buffer + 32, NULL, 10);
+
+    // s'abonner à l'adresse ip recu
+    *udpsocket_fd = socket(PF_INET, SOCK_DGRAM, 0);
+    int ok = 1;
+    int r = setsockopt(*udpsocket_fd, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok));
+    if (r == -1)
+    {
+        perror("[WELCO] setsockopt");
+        exit(EXIT_FAILURE);
+    }
+    struct sockaddr_in address_sock;
+    address_sock.sin_family = AF_INET;
+    address_sock.sin_port = htons(port);
+    address_sock.sin_addr.s_addr = htonl(INADDR_ANY);
+    r = bind(*udpsocket_fd, (struct sockaddr *)&address_sock, sizeof(struct sockaddr_in));
+    if (r == -1)
+    {
+        perror("[WELCO] bind");
+        exit(EXIT_FAILURE);
+    }
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr(ip);
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    r = setsockopt(*udpsocket_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+
+    printf("[WELCO] La réponse du serveur : %s\n", buffer);
+}
+// 18.82
+void recv_POSIT(int tcpsocket_fd, uint16_t *x, uint16_t *y)
+{
+    // Recevoir la position du joueur sous la forme "POSIT id x y***"
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    int received_bytes = recv(tcpsocket_fd, buffer, 25, 0);
+    if (received_bytes == -1)
+    {
+        perror("[POSIT] read");
+        exit(EXIT_FAILURE);
+    }
+    buffer[received_bytes] = '\0';
+    // extraire les informations
+    char id[9];
+    strncpy(id, buffer + 6, 8);
+    // TODO:Verifier si id correspond au joueur, est-ce utile d'extraire id ?
+    *x = (uint16_t)strtol(buffer + 15, NULL, 10);
+    *y = (uint16_t)strtol(buffer + 18, NULL, 10);
+
+    printf("[POSIT] La réponse du serveur : %s\n", buffer);
+    printf("[POSIT] id : %s, x : %d, y : %d\n", id, *x, *y);
 }

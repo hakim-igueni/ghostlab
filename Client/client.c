@@ -17,6 +17,7 @@ int main()
     // uint8_t n, m, s;
     uint8_t games[255];
     uint8_t n;
+    uint16_t x, y;
     int udpsocket_fd;
     char buffer[BUFFER_SIZE];
 
@@ -89,12 +90,9 @@ int main()
 
     // Start the game
     printf("\n[---Début de la partie---]\n");
-    send_START_request(tcpsocket_fd);
-    recv_WELCO(tcpsocket_fd, &udpsocket_fd);
+    send_START_request(tcpsocket_fd, &udpsocket_fd, &x, &y);
     memset(buffer, 0, BUFFER_SIZE);
-    recv(udpsocket_fd, buffer, BUFFER_SIZE, 0);
-    printf("[---Message recu après l'abonnement---]\n");
-    printf("%s\n", buffer);
+    recv_UDP(udpsocket_fd);
     // sleep(10);
 
     //
