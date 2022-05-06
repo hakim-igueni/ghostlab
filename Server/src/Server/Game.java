@@ -45,6 +45,7 @@ public class Game {
 
     public synchronized void startGame() {
         this.started = true;
+        ServerImpl.INSTANCE.startGame(this);
         GameManager gameManager = new GameManager(this);
         this.gameManagerThread = new Thread(gameManager); // TODO: check if we really need an attribute for this
         this.gameManagerThread.start();

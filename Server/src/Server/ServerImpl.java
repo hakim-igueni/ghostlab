@@ -20,6 +20,11 @@ public class ServerImpl {
         }
     }
 
+    public synchronized void startGame(Game game) {
+        notStartedGames.remove(game.getId());
+        startedGames.put(game.getId(), game);
+    }
+
     public synchronized void addNotStartedGame(Game game) {
         if (notStartedGames.size() < 42) {
             notStartedGames.put(game.getId(), game);
