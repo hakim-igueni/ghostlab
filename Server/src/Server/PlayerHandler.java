@@ -10,14 +10,14 @@ import java.util.function.Consumer;
 
 import static Server.Utils.readRequest;
 
-public class PlayerThread implements Runnable {
+public class PlayerHandler implements Runnable {
     private final HashMap<String, Consumer<String[]>> beforeGameSTARTCommands = new HashMap<>();
     private final HashMap<String, Consumer<String[]>> afterGameSTARTCommands = new HashMap<>();
     private final PrintWriter out;
     private final InputStreamReader in;
     private final Player player;
 
-    public PlayerThread(Socket s) throws IOException {
+    public PlayerHandler(Socket s) throws IOException {
         this.out = new PrintWriter(new OutputStreamWriter(s.getOutputStream()), true);
         this.in = new InputStreamReader(s.getInputStream());
         this.player = new Player(in, out);
