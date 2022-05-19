@@ -6,9 +6,9 @@ import java.net.InetAddress;
 
 public class Player {
     private final PrintWriter out;
-    private final InputStreamReader in;
-    private String id;
-    private int UDPPort;
+    private final InputStreamReader in; // todo: delete this if not needed
+    private String id = null;
+    private int UDPPort = -1;
     private Game game = null;
     private boolean hasSentSTART = false;
     private int score = 0;
@@ -88,6 +88,9 @@ public class Player {
                 ServerImpl.INSTANCE.removeGame(this.game);
             }
             this.game = null;
+            this.hasSentSTART = false;
+            this.id = null;
+            this.UDPPort = -1;
             return true;
         }
         return false;

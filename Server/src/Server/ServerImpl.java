@@ -26,7 +26,8 @@ public class ServerImpl {
     }
 
     public synchronized void addNotStartedGame(Game game) {
-        if (notStartedGames.size() < 42) {
+//        if (notStartedGames.size() < 42) {
+        if (notStartedGames.size() <= Game.MAX_GAMES) {
             notStartedGames.put(game.getId(), game);
         } else {
             System.out.println("Too many games!!!!!!!!!!!!!");
