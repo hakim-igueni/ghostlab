@@ -8,12 +8,14 @@ import java.util.function.Consumer;
 public class Game {
     public static final int MAX_GAMES = 256; // Maximum number of games
     private static final HashSet<Byte> availableGameIds = new HashSet<>();
+
     // this HashSet is used to store the available game ids and reuse them when a game is over
     static {
         for (int i = 0; i <= 255; i++) {
             availableGameIds.add((byte) i);
         }
     }
+
     private final HashMap<String, Player> players = new HashMap<>();
     private final HashMap<String, Player> playersWhoDidntSendSTART = new HashMap<>();
     private final Labyrinth labyrinth;
@@ -99,5 +101,10 @@ public class Game {
 
     public void sendOGAME(PrintWriter out) {
         out.printf("OGAME %c %c***", this.id, getNbPlayers());
+    }
+
+    public Labyrinth getLabyrinth() {
+        return labyrinth;
+
     }
 }

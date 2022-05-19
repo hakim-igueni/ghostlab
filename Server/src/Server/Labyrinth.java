@@ -6,14 +6,16 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-/** Adapted from the code
- * <a href="https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>*/
+/**
+ * Adapted from the code
+ * <a href="https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>
+ */
 public class Labyrinth {
     private static final int[][] DIRECTIONS = { // distance of 2 to each side
-            { 0, -2 }, // north
-            { 0, 2 }, // south
-            { 2, 0 }, // east
-            { -2, 0 }, // west
+            {0, -2}, // north
+            {0, 2}, // south
+            {2, 0}, // east
+            {-2, 0}, // west
     };
     public static final int MAX = 200;
     public static final int MIN = 5;
@@ -30,8 +32,8 @@ public class Labyrinth {
         this.height = (short) (Math.random() * (Labyrinth.MAX - Labyrinth.MIN) + Labyrinth.MIN);
         this.width = (short) ((this.height * 3) / 4); // width to height ratio is 4:3
         this.cells = new Cell[height][width];
-        for(int row=0; row < this.height; row++) {
-            for(int col=0; col < cells[row].length; col++) {
+        for (int row = 0; row < this.height; row++) {
+            for (int col = 0; col < cells[row].length; col++) {
                 Cell cell = new Cell(row, col);
                 cells[row][col] = cell;
             }
@@ -144,6 +146,10 @@ public class Labyrinth {
 
     public byte getNbGhosts() {
         return nbGhosts;
+    }
+
+    public boolean isWall(int row, int col) {
+        return cells[row][col].isWall();
     }
 
     static class Cell {
