@@ -28,7 +28,12 @@ public class PlayerHandler implements Runnable {
         beforeGameSTARTCommands.put("GAME?", this::treatGAMERequest);
         beforeGameSTARTCommands.put("LIST?", this::treatLISTRequest);
         beforeGameSTARTCommands.put("START", this::treatSTARTRequest);
+        afterGameSTARTCommands.put("UPMOV", this::treatUPMOVRequest);
+        afterGameSTARTCommands.put("DOMOV", this::treatDOMOVRequest);
+        afterGameSTARTCommands.put("LEMOV", this::treatLEMOVRequest);
+        afterGameSTARTCommands.put("RIMOV", this::treatRIMOVRequest);
     }
+
 
     private void sendDUNNO() {
         this.out.printf("DUNNO***");
@@ -73,6 +78,10 @@ public class PlayerHandler implements Runnable {
 
     public boolean isInvalidPort(String port) {
         return !port.matches("\\d{4}");
+    }
+
+    public boolean isInvalidd(String d) {
+        return !d.matches("\\d{3}");
     }
 
     private void treatNEWPLRequest(String[] args) {
@@ -273,6 +282,119 @@ public class PlayerHandler implements Runnable {
         } catch (Exception e) {
             System.out.printf("[Req-START] Error: %s\n", e.getMessage());
             sendDUNNO();
+        }
+    }
+
+    private void treatUPMOVRequest(String[] args) {
+        // UPMOV d***
+        try {
+            // Verify if the request has one argument
+            if (args.length != 2) {
+                throw new Exception("UPMOV request must have 1 argument: UPMOV d");
+            }
+            if (isInvalidd(args[1])) {
+                throw new Exception("d must have 3 characters");
+            }
+            int d = Integer.parseInt(args[1]);
+
+            //get position of the player
+            int y = this.player.getCol();
+            int x = this.player.getRow();
+
+            int dist = x - d;
+            if (dist < 0) {
+                throw new Exception("The distance" + dist + "can not be traversed");
+            } else {
+                this.player.setRow(dist);
+                System.out.println("MOVE! " + x + " " + y + "***");
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void treatDOMOVRequest(String[] args) {
+        // DOMOV d***
+        try {
+            // Verify if the request has one argument
+            if (args.length != 2) {
+                throw new Exception("UPMOV request must have 1 argument: UPMOV d");
+            }
+            if (isInvalidd(args[1])) {
+                throw new Exception("d must have 3 characters");
+            }
+            int d = Integer.parseInt(args[1]);
+
+            //get position of the player
+            int y = this.player.getCol();
+            int x = this.player.getRow();
+
+            int dist = x + d;
+            if (dist >= this.player.getGame().getLabyrinthHeight()) {
+                throw new Exception("The distance" + dist + "can not be traversed");
+            } else {
+                this.player.setRow(dist);
+                System.out.println("MOVE! " + x + " " + y + "***");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void treatRIMOVRequest(String[] args) {
+        // RIMOV d***
+        try {
+            // Verify if the request has one argument
+            if (args.length != 2) {
+                throw new Exception("UPMOV request must have 1 argument: UPMOV d");
+            }
+            if (isInvalidd(args[1])) {
+                throw new Exception("d must have 3 characters");
+            }
+            int d = Integer.parseInt(args[1]);
+
+            //get position of the player
+            int y = this.player.getCol();
+            int x = this.player.getRow();
+
+            int dist = y + d;
+            if (dist >= this.player.getGame().getLabyrinthWidth()) {
+                throw new Exception("The distance" + dist + "can not be traversed");
+            } else {
+                this.player.setRow(dist);
+                System.out.println("MOVE! " + x + " " + y + "***");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void treatLEMOVRequest(String[] args) {
+        // LEMOV d***
+        try {
+            // Verify if the request has one argument
+            if (args.length != 2) {
+                throw new Exception("UPMOV request must have 1 argument: UPMOV d");
+            }
+            if (isInvalidd(args[1])) {
+                throw new Exception("d must have 3 characters");
+            }
+            int d = Integer.parseInt(args[1]);
+
+            //get position of the player
+            int y = this.player.getCol();
+            int x = this.player.getRow();
+
+            int dist = y - d;
+            if (dist < 0) {
+                throw new Exception("The distance" + dist + "can not be traversed");
+            } else {
+                this.player.setRow(dist);
+                System.out.println("MOVE! " + x + " " + y + "***");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

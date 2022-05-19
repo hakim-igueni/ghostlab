@@ -12,10 +12,28 @@ public class Player {
     private Game game = null;
     private boolean hasSentSTART = false;
     private int score = 0;
+    private int col;
+    private int row;
 
     public Player(InputStreamReader in, PrintWriter out) {
         this.out = out;
         this.in = in;
+    }
+
+    public int getCol() {
+        return col;
+    }
+
+    public void setCol(int col) {
+        this.col = col;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
     }
 
     public String getId() {
@@ -92,5 +110,7 @@ public class Player {
         }
         return false;
     }
+
+
 }
 
