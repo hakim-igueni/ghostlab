@@ -40,6 +40,7 @@ public class ServerImpl {
         } else {
             notStartedGames.remove(game.getId());
         }
+        Game.addAvailableGameId(game.getId());
     }
 
     public Game getGame(byte id) {

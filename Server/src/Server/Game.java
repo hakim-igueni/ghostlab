@@ -2,10 +2,17 @@ package Server;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class Game {
-    private volatile static byte nbGames = 0;
+    private static final HashSet<Byte> availableGameIds = new HashSet<>();
+    // this HashSet is used to store the available game ids and reuse them when a game is over
+    static {
+        for (int i = 0; i <= 255; i++) {
+            availableGameIds.add((byte) i);
+        }
+    }
     private final HashMap<String, Player> players = new HashMap<>();
     private final HashMap<String, Player> playersWhoDidntSendSTART = new HashMap<>();
     private final Labyrinth labyrinth;
@@ -14,13 +21,21 @@ public class Game {
     private Thread gameManagerThread;
 
     public Game() {
-        Game.incrNbGames();
-        this.id = nbGames;
-        labyrinth = new Labyrinth((short) 10, (short) 10);
+        this.id = (byte) Game.nextAvailableGameId();
+        labyrinth = new Labyrinth();
     }
 
-    public synchronized static void incrNbGames() {
-        nbGames++;
+    public synchronized static int nextAvailableGameId() {
+        if (availableGameIds.size() == 0) {
+            throw new RuntimeException("No more game ids available");
+        }
+        byte id = availableGameIds.iterator().next();
+        availableGameIds.remove(id);
+        return id;
+    }
+
+    public synchronized static void addAvailableGameId(byte id) {
+        availableGameIds.add(id);
     }
 
     public byte getId() {
