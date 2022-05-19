@@ -16,8 +16,10 @@ public class PlayerHandler implements Runnable {
     private final PrintWriter out;
     private final InputStreamReader in;
     private final Player player;
+    private final Socket socket;
 
     public PlayerHandler(Socket s) throws IOException {
+        this.socket = s;
         this.out = new PrintWriter(new OutputStreamWriter(s.getOutputStream()), true);
         this.in = new InputStreamReader(s.getInputStream());
         this.player = new Player(in, out);
@@ -28,6 +30,9 @@ public class PlayerHandler implements Runnable {
         beforeGameSTARTCommands.put("GAME?", this::treatGAMERequest);
         beforeGameSTARTCommands.put("LIST?", this::treatLISTRequest);
         beforeGameSTARTCommands.put("START", this::treatSTARTRequest);
+
+        afterGameSTARTCommands.put("GLIS?", this::treatGLISRequest);
+        afterGameSTARTCommands.put("IQUIT", this::treatIQUITRequest);
     }
 
     private void sendDUNNO() {
@@ -233,7 +238,7 @@ public class PlayerHandler implements Runnable {
     }
 
     private void treatGAMERequest(String[] args) {
-        // send GAMES n
+        // GAME?***
         try {
             if (args.length != 1) {
                 throw new Exception("GAMES request must have 0 arguments");
@@ -266,13 +271,62 @@ public class PlayerHandler implements Runnable {
             if (g == null) {
                 throw new Exception("Player is not in a game");
             }
-            // TODO: block the player
             System.out.printf("[Ans-START] Player %s is waiting for game %d to start\n", this.player.getId(), g.getId());
             this.player.pressSTART();
             System.out.printf("[Ans-START] Player %s is now in game %d\n", this.player.getId(), g.getId());
         } catch (Exception e) {
             System.out.printf("[Req-START] Error: %s\n", e.getMessage());
             sendDUNNO();
+        }
+    }
+
+    private void treatGLISRequest(String[] args) {
+        // GLIS?***
+        try {
+            if (args.length != 2) {
+                throw new Exception("GLIS? request must have 1 argument: LIST? m");
+            }
+            System.out.printf("[Req-GLIS?] Player %s requested list of players of his game\n", this.player.getId());
+            Game g = this.player.getGame();
+            if (g == null) {
+                throw new Exception("Player is not in a game");
+            }
+
+            // send GPLYR id x y p***
+            this.out.printf("GLIS! %c***", g.getNbPlayers());
+            System.out.printf("[Ans-GLIS?] List of players of game %d sent to player %s\n", g.getId(), this.player.getId());
+            g.forEachPlayer(p -> {
+                p.sendGPLYR(this.out);
+                System.out.printf("[Ans-GLIS?] GPLYR %s %04d %04d %04d\n", p.getId(), p.getRow(), p.getCol(), p.getScore());
+            });
+
+            System.out.println();
+        } catch (Exception e) {
+            System.out.printf("[Req-GLIS?] Error: %s\n\n", e.getMessage());
+            sendDUNNO();
+        }
+    }
+
+    private void treatIQUITRequest(String[] args) {
+        // IQUIT***
+        try {
+            if (args.length != 1) {
+                throw new Exception("IQUIT request must have 0 arguments");
+            }
+            System.out.printf("[Req-IQUIT] Player %s requested to quit the party %d\n", this.player.getId(), this.player.getGame().getId());
+            Game g = this.player.getGame();
+            if (g == null) {
+                throw new Exception("Player is not in a game");
+            }
+            this.player.unsubscribe();
+
+            // send GOBYE***
+            this.out.printf("GOBYE***");
+            // close the connection
+            this.socket.close();
+            System.out.printf("[Ans-IQUIT] Player %s left the game %d\n", this.player.getId(), g.getId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
