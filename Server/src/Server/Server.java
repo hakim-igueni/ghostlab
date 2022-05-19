@@ -12,9 +12,11 @@ public class Server {
             while (true) {
                 // TODO: make sure that both h and w don't exceed the 1000 (so < 1000)
                 Socket socket = server.accept();
-                PlayerHandler welcomePlayerServ = new PlayerHandler(socket);
-                Thread t = new Thread(welcomePlayerServ);
+                PlayerHandler playerHandler = new PlayerHandler(socket);
+                Thread t = new Thread(playerHandler);
                 t.start();
+                // todo: kill the thread when the player disconnects
+                // todo: (optional: add an array of threads)
             }
         } catch (Exception e) {
             e.printStackTrace();

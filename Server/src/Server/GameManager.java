@@ -28,7 +28,7 @@ public class GameManager implements Runnable {
         this.portMulticast = getNextMulticastPort();
     }
 
-    private int getNextMulticastPort() {
+    private int getNextMulticastPort() { // todo: check if the port is already used
         lastGivenMulticastPort++;
         if (lastGivenMulticastPort == 10000) {
             throw new RuntimeException("No more multicast ports available"); // TODO: treat this properly
@@ -37,7 +37,7 @@ public class GameManager implements Runnable {
     }
 
     /* Generate the multicast address for the game */
-    private InetAddress getNextMulticastAddress() {
+    private InetAddress getNextMulticastAddress() { // todo: check if the address is already used 	isReachable
         byte[] lastMCAdd = lastGivenMulticastAddress.getAddress();
         lastMCAdd[3]++;
         if (lastMCAdd[3] == 255) {
@@ -71,6 +71,7 @@ public class GameManager implements Runnable {
 
     public void sendPOSITtoAllPlayers() {
         // TODO: generate the positions of the players randomly
+        // todo: make sure to respect the rules of the game (not place the player on a wall, not place the player on another player, ...)
         // generate a random number
         int x = (int) (Math.random() * game.getLabyrinthHeight());
         int y = (int) (Math.random() * game.getLabyrinthWidth());

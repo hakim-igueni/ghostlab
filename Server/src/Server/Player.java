@@ -6,14 +6,14 @@ import java.net.InetAddress;
 
 public class Player {
     private final PrintWriter out;
-    private final InputStreamReader in;
-    private String id;
-    private int UDPPort;
+    private final InputStreamReader in; // todo: delete this if not needed
+    private String id = null;
+    private int UDPPort = -1;
     private Game game = null;
     private boolean hasSentSTART = false;
     private int score = 0;
-    private int col;
     private int row;
+    private int col;
 
     public Player(InputStreamReader in, PrintWriter out) {
         this.out = out;
@@ -98,19 +98,29 @@ public class Player {
         dest.printf("PLAYR %s***", this.id);
     }
 
+    public void sendGPLYR(PrintWriter dest) {
+        dest.printf("GPLYR %s %04d %04d %04d***", id, row, col, score);
+    }
+
     public boolean unsubscribe() {
         if (this.game != null) {
             this.game.removePlayer(this);
             // remove the game if it has no players left
             if (this.game.getNbPlayers() == 0) {
                 ServerImpl.INSTANCE.removeGame(this.game);
+                System.out.printf("Game %s removed.\n", this.game.getId());
             }
             this.game = null;
+            this.hasSentSTART = false;
+            this.id = null;
+            this.UDPPort = -1;
             return true;
         }
         return false;
     }
 
-
+    public int getScore() {
+        return this.score;
+    }
 }
 
