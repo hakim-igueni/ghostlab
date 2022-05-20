@@ -122,5 +122,9 @@ public class Player {
     public int getScore() {
         return this.score;
     }
+
+    public Ghost getGhost() {
+        return null;
+    }
 }
 
