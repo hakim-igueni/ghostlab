@@ -22,18 +22,18 @@ public class GameManager implements Runnable {
     private final InetAddress ipMulticast;
     private final int portMulticast;
 
+    public GameManager(Game game) {
+        this.game = game;
+        this.ipMulticast = getNextMulticastAddress();
+        this.portMulticast = getNextMulticastPort();
+    }
+
     public int getPortMulticast() {
         return portMulticast;
     }
 
     public InetAddress getIpMulticast() {
         return ipMulticast;
-    }
-
-    public GameManager(Game game) {
-        this.game = game;
-        this.ipMulticast = getNextMulticastAddress();
-        this.portMulticast = getNextMulticastPort();
     }
 
     private int getNextMulticastPort() { // todo: check if the port is already used
@@ -78,13 +78,12 @@ public class GameManager implements Runnable {
     }
 
     public void sendPOSITtoAllPlayers() {
-        // TODO: generate the positions of the players randomly
         // todo: make sure to respect the rules of the game (not place the player on a wall, not place the player on another player, ...)
-        // generate a random number
-        int x = (int) (Math.random() * game.getLabyrinthHeight());
-        int y = (int) (Math.random() * game.getLabyrinthWidth());
         // send the POSIT message to all players
-        game.forEachPlayer(player -> player.sendPOSIT(x, y));
+        game.forEachPlayer(player -> {
+            game.getLabyrinth().placePlayer(player);
+            player.sendPOSIT();
+        });
     }
 
     @Override
@@ -93,8 +92,12 @@ public class GameManager implements Runnable {
         sendWELCOtoAllPlayers();
         // send [POSIT x y] to all players
         sendPOSITtoAllPlayers();
-//        while (true) {
-//            break;
-//        }
+        moveGhosts();
+
+
+    }
+
+    private void moveGhosts() {
+        game.getLabyrinth().moveGhosts(this.ipMulticast, this.portMulticast);
     }
 }

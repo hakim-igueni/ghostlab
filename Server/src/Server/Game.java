@@ -111,6 +111,9 @@ public class Game {
 
     public Labyrinth getLabyrinth() {
         return labyrinth;
+    }
 
+    public Player getPlayer(String id) {
+        return players.get(id);
     }
 }

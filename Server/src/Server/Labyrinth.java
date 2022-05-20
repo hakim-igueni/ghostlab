@@ -1,6 +1,9 @@
 package Server;
 
+import java.net.InetAddress;
 import java.util.*;
+
+import static Server.Utils.sendMessageUDP;
 
 /**
  * Adapted from the code
@@ -15,10 +18,10 @@ public class Labyrinth {
             {2, 0}, // east
             {-2, 0}, // west
     };
+    private static final Random random = new Random();
     // TODO: make sure rows and cols are < 1000
     private final short height; // number of lines
     private final short width;  // number of columns
-    private final Random random = new Random();
     private final Cell[][] grid;
     private final Ghost[] ghosts;
     private final HashSet<Cell> nonWallCells = new HashSet<>();
@@ -27,7 +30,7 @@ public class Labyrinth {
 
     public Labyrinth() {
         this.height = (short) (Math.random() * (Labyrinth.MAX - Labyrinth.MIN) + Labyrinth.MIN);
-        this.width = (short) ((this.height * 3) / 4); // width to height ratio is 4:3
+        this.width = (short) (this.height * 0.75); // height to width ratio is 4:3
         this.grid = new Cell[height][width];
         generateGrid();
         print();
@@ -61,7 +64,7 @@ public class Labyrinth {
         int x = random.nextInt(this.height);
         int y = random.nextInt(this.width);
 
-        grid[x][y].setWall(false); // set cell to path
+        grid[x][y].setWall(); // set cell to path
         nonWallCells.add(grid[x][y]);
         // Compute cell frontier and add it to a frontier collection
         Set<Cell> frontierCells = new HashSet<>(frontierCellsOf(grid[x][y]));
@@ -119,15 +122,15 @@ public class Labyrinth {
         Cell inBetweenCell = grid[inBetweenRow][inBetweenCol];
         if (frontierCell.isWall)
             nonWallCells.add(frontierCell);
-        frontierCell.setWall(false);
+        frontierCell.setWall();
 
         if (inBetweenCell.isWall)
             nonWallCells.add(inBetweenCell);
-        inBetweenCell.setWall(false);
+        inBetweenCell.setWall();
 
         if (neighbour.isWall)
             nonWallCells.add(neighbour);
-        neighbour.setWall(false);
+        neighbour.setWall();
     }
 
     private boolean isValidPosition(int row, int col) {
@@ -167,11 +170,48 @@ public class Labyrinth {
         return grid[row][col].isWall;
     }
 
+    public void placePlayer(Player player) {
+        // generate a random number
+        int row, col;
+        do {
+            row = random.nextInt(height);
+            col = random.nextInt(width);
+        } while (grid[row][col].isWall);
+        grid[row][col].containsPlayer = true;
+        player.setPosition(row, col);
+    }
+
+    public void moveGhosts(InetAddress ipMulticast, int portMulticast) {
+        for (Ghost ghost : ghosts) {
+            int oldRow = ghost.getRow();
+            int oldCol = ghost.getCol();
+            int newRow, newCol, distance;
+            while (true) {
+                if (random.nextBoolean()) { // move horizontally
+                    newRow = oldRow;
+                    distance = random.nextInt(ghost.getSpeed() + 1);
+                    newCol = oldCol + (random.nextBoolean() ? 1 : -1) * distance;
+                } else { // move vertically
+                    newCol = oldCol;
+                    distance = random.nextInt(ghost.getSpeed() + 1);
+                    newRow = oldRow + (random.nextBoolean() ? 1 : -1) * distance;
+                }
+                if (isValidPosition(newRow, newCol) && !grid[newRow][newCol].isWall && !grid[newRow][newCol].containsPlayer) {
+                    grid[oldRow][oldCol].containsGhost = false;
+                    ghost.setPosition(newRow, newCol);
+                    grid[newRow][newCol].containsGhost = true;
+                    sendMessageUDP(String.format("GHOST %03d %03d+++", newRow, newCol), ipMulticast, portMulticast);
+                    break;
+                }
+            }
+        }
+    }
+
     static class Cell {
         private final int row, column;
         private boolean isWall;
-        private boolean containsGhost = false;
-        private boolean containsPlayer = false;
+        private volatile boolean containsGhost = false;
+        private volatile boolean containsPlayer = false;
 
         public Cell(int row, int column, boolean isWall) {
             this.row = row;
@@ -179,8 +219,8 @@ public class Labyrinth {
             this.isWall = isWall;
         }
 
-        public void setWall(boolean isWall) {
-            this.isWall = isWall;
+        private void setWall() {
+            this.isWall = false;
         }
 
         public int getRow() {

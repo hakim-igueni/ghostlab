@@ -1,7 +1,8 @@
 package Server;
 
 public class Ghost {
-    private final int score = (int) (Math.random() * 10);
+    private final int speed = (int) (Math.random() * 10);
+    private final int score = speed * 2;
     private int row;
     private int col;
 
@@ -13,6 +14,7 @@ public class Ghost {
     public int getRow() {
         return row;
     }
+
 
     public void setRow(int row) {
         this.row = row;
@@ -28,5 +30,14 @@ public class Ghost {
 
     public int getScore() {
         return score;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void setPosition(int newRow, int newCol) {
+        this.row = newRow;
+        this.col = newCol;
     }
 }

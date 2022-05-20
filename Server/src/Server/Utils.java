@@ -2,6 +2,9 @@ package Server;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 public class Utils {
     private Utils() {
@@ -35,5 +38,15 @@ public class Utils {
             return req.subSequence(0, req.length() - 3).toString();
         }
         return "";
+    }
+
+    public static void sendMessageUDP(String message, InetAddress address, int portUDP) {
+        try (DatagramSocket ds = new DatagramSocket()) {
+            byte[] buf = message.getBytes();
+            DatagramPacket dp = new DatagramPacket(buf, buf.length, address, portUDP);
+            ds.send(dp);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

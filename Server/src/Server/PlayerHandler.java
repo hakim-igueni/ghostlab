@@ -4,13 +4,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
 import static Server.Utils.readRequest;
+import static Server.Utils.sendMessageUDP;
 
-public class PlayerHandler<InetAdress> implements Runnable {
+public class PlayerHandler implements Runnable {
     private final HashMap<String, Consumer<String[]>> beforeGameSTARTCommands = new HashMap<>();
     private final HashMap<String, Consumer<String[]>> afterGameSTARTCommands = new HashMap<>();
     private final PrintWriter out;
@@ -22,7 +26,7 @@ public class PlayerHandler<InetAdress> implements Runnable {
         this.socket = s;
         this.out = new PrintWriter(new OutputStreamWriter(s.getOutputStream()), true);
         this.in = new InputStreamReader(s.getInputStream());
-        this.player = new Player(in, out);
+        this.player = new Player(in, out, socket.getInetAddress());
         beforeGameSTARTCommands.put("NEWPL", this::treatNEWPLRequest);
         beforeGameSTARTCommands.put("REGIS", this::treatREGISRequest);
         beforeGameSTARTCommands.put("UNREG", this::treatUNREGRequest);
@@ -40,7 +44,6 @@ public class PlayerHandler<InetAdress> implements Runnable {
         afterGameSTARTCommands.put("IQUIT", this::treatIQUITRequest);
         afterGameSTARTCommands.put("MALL?", this::treatMALLRequest);
         afterGameSTARTCommands.put("SEND!", this::treatSENDRequest);
-
     }
 
 
@@ -69,7 +72,7 @@ public class PlayerHandler<InetAdress> implements Runnable {
         }
 
         // after game starts
-        while (true) {
+        while (!this.player.hasFinishedPlaying()) { // while the player is still playing and the game is not finished
             request = readRequest(this.in);
             if (request == null) { // the client is disconnected
                 System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
@@ -487,87 +490,72 @@ public class PlayerHandler<InetAdress> implements Runnable {
             this.out.printf("GOBYE***");
             // close the connection
             this.socket.close();
+            this.player.finishPlaying();
             System.out.printf("[Ans-IQUIT] Player %s left the game %d\n", this.player.getId(), g.getId());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-IQUIT] Error: %s\n\n", e.getMessage());
+            sendDUNNO();
         }
     }
 
     private void treatMALLRequest(String[] args) {
         // MALL? mess***
-        try {
+        try (DatagramSocket dso = new DatagramSocket()) {
             if (args.length != 2) {
                 throw new Exception("MALL? request must have 1 argument");
             }
-            //verify the message
+
+            // verify the message
             if (isInvalidmess(args[1])) {
-                throw new Exception("Message must have at least 199 characters");
+                throw new Exception("Message must have at least 200 characters and not contain *** and +++");
             }
-            //send the message to all players
+            System.out.printf("[Req-MALL?] Player %s requested to send a message to all players of his game\n", this.player.getId());
+
+            // send the message to all players
             String mess = args[1];
             int port = this.player.getGame().getGameManager().getPortMulticast();
             InetAddress address = this.player.getGame().getGameManager().getIpMulticast();
-            DatagramSocket dso = new DatagramSocket();
-            byte[] data;
-            data = mess.getBytes();
-            InetSocketAddress ia = new InetSocketAddress(address, port);
-            DatagramPacket paquet = new DatagramPacket(data, data.length, ia);
-            dso.send(paquet);
-            this.out.printf("MALL! ***");
+            sendMessageUDP(String.format("MESSA %s %s+++", this.player.getId(), mess), address, port);
 
-        } catch (SocketException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            // send MALL! mess***
+            this.out.printf("MALL!***");
+            System.out.printf("[Ans-MALL?] Message sent to all players of game %d\n", this.player.getGame().getId());
+            System.out.printf("[Ans-MALL?] Message: %s\n", mess);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-MALL] Error: %s\n\n", e.getMessage());
+            sendDUNNO();
         }
     }
 
     private void treatSENDRequest(String[] args) {
         // SEND id mess***
-        try {
-            if (args.length != 2) {
+        try (DatagramSocket dso = new DatagramSocket()) {
+            if (args.length != 3)
                 throw new Exception("SEND? request must have 2 arguments");
-            }
-            String id = args[1];
-            if (isInvalidId(args[1])) {
+
+            if (isInvalidId(args[1]))
                 throw new Exception("ID must have 8 alphanumeric characters");
-            }
-            System.out.printf("[Req-SEND?] Player %s requested to send a message to the player with id of his game\n", this.player.getId());
-            Game g = this.player.getGame();
-            if (g == null) {
-                System.out.println("Player is not in a game");
-                this.out.printf("NSEND***");
 
-            } else if (isInvalidmess(args[1])) {
-                throw new Exception("Message must have at least 199 characters");
-            } else {
-                //send the message to the player
-                String mess = args[1];
-                int port = this.player.getUDPPort();
-                DatagramSocket dso = new DatagramSocket();
-                byte[] data;
-                data = mess.getBytes();
-                DatagramPacket paquet = new DatagramPacket(data, data.length, this.socket.getInetAddress(), port);
-                dso.send(paquet);
-                this.out.printf("SEND***");
-                if (!this.player.getGame().isStarted()) {
-                    // send GOBYE***
-                    this.out.printf("GOBYE***");
-                    // close the connection
-                    this.socket.close();
-                }
+            if (isInvalidmess(args[2]))
+                throw new Exception("Message must have at least 200 characters and not contain *** and +++");
 
-            }
-        } catch (SocketException e) {
-            throw new RuntimeException(e);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            String id = args[1];
+            String mess = args[2];
+            System.out.printf("[Req-SEND?] Player %s requested to send a message to the player with id=%s\n", this.player.getId(), id);
+
+            // send the message to the player
+            Player p = this.player.getGame().getPlayer(id);
+            if (p == null)
+                throw new Exception("Player with id=" + id + " is not in the game");
+            int port = p.getUDPPort();
+            InetAddress address = p.getAddress();
+
+            byte[] data = mess.getBytes();
+            dso.send(new DatagramPacket(data, data.length, address, port));
+            this.out.printf("SEND***");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-MALL] Error: %s\n\n", e.getMessage());
+            this.out.printf("NSEND***");
         }
     }
 }
