@@ -330,6 +330,15 @@ public class PlayerHandler implements Runnable {
                         break;
                     }
                 }
+                int score = this.player.getScore();
+                for (int i = x; i >= newx; i--) {
+                    int p = 0;
+                    if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
+                        p = score + 1;
+                        break;
+                    }
+                    this.out.printf("MOVEF! %03d %03d***", x, y, p);
+                }
                 this.player.setRow(newx);
                 this.out.printf("MOVE! %03d %03d***", newx, y);
 
@@ -357,12 +366,22 @@ public class PlayerHandler implements Runnable {
             int x = this.player.getRow();
 
             int newx = x + d;
-            for (int i = x; i >= newx; i++) {
+            for (int i = x; i <= newx; i++) {
                 if (this.player.getGame().getLabyrinth().isWall(i, y)) {
                     newx = i - 1;
                     break;
                 }
             }
+            int score = this.player.getScore();
+            for (int i = x; i <= newx; i++) {
+                int p = 0;
+                if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
+                    p = score + 1;
+                    break;
+                }
+                this.out.printf("MOVEF! %03d %03d***", x, y, p);
+            }
+
             if (newx >= this.player.getGame().getLabyrinthHeight()) {
                 throw new Exception("The distance" + newx + "can not be traversed");
             } else {
@@ -391,16 +410,23 @@ public class PlayerHandler implements Runnable {
             int x = this.player.getRow();
 
             int newy = y + d;
-
-
             if (newy >= this.player.getGame().getLabyrinthWidth()) {
                 throw new Exception("The distance" + newy + "can not be traversed");
             } else {
-                for (int i = y; i >= newy; i++) {
+                for (int i = y; i <= newy; i++) {
                     if (this.player.getGame().getLabyrinth().isWall(x, i)) {
                         newy = i - 1;
                         break;
                     }
+                }
+                int score = this.player.getScore();
+                for (int i = x; i <= newy; i++) {
+                    int p = 0;
+                    if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
+                        p = score + 1;
+                        break;
+                    }
+                    this.out.printf("MOVEF! %03d %03d***", x, y, p);
                 }
                 this.player.setRow(newy);
                 this.out.printf("MOVE! %03d %03d***", x, y);
@@ -436,6 +462,15 @@ public class PlayerHandler implements Runnable {
                         newy = i + 1;
                         break;
                     }
+                }
+                int score = this.player.getScore();
+                for (int i = x; i >= newy; i++) {
+                    int p = 0;
+                    if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
+                        p = score + 1;
+                        break;
+                    }
+                    this.out.printf("MOVEF! %03d %03d***", x, y, p);
                 }
                 this.player.setRow(newy);
                 this.out.printf("MOVE! %03d %03d***", x, y);

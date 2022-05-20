@@ -142,5 +142,9 @@ public class Player {
     public InetAddress getAddress() {
         return address;
     }
+
+    public Ghost getGhost() {
+        return null;
+    }
 }
 
