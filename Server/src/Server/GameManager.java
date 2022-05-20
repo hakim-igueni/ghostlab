@@ -22,6 +22,14 @@ public class GameManager implements Runnable {
     private final InetAddress ipMulticast;
     private final int portMulticast;
 
+    public int getPortMulticast() {
+        return portMulticast;
+    }
+
+    public InetAddress getIpMulticast() {
+        return ipMulticast;
+    }
+
     public GameManager(Game game) {
         this.game = game;
         this.ipMulticast = getNextMulticastAddress();

@@ -21,11 +21,16 @@ public class Game {
     private final Labyrinth labyrinth;
     private final byte id;
     private boolean started = false;
-    private Thread gameManagerThread;
+    private GameManager gameManager;
+
 
     public Game() {
         this.id = (byte) Game.nextAvailableGameId();
         labyrinth = new Labyrinth();
+    }
+
+    public GameManager getGameManager() {
+        return gameManager;
     }
 
     public synchronized static int nextAvailableGameId() {
@@ -53,6 +58,7 @@ public class Game {
         return started;
     }
 
+
     public synchronized void removeFromPlayersWhoDidntSendSTART(Player player) {
         playersWhoDidntSendSTART.remove(player.getId());
 
@@ -64,9 +70,9 @@ public class Game {
     public synchronized void startGame() {
         this.started = true;
         ServerImpl.INSTANCE.startGame(this);
-        GameManager gameManager = new GameManager(this);
-        this.gameManagerThread = new Thread(gameManager); // TODO: check if we really need an attribute for this
-        this.gameManagerThread.start();
+        this.gameManager = new GameManager(this);
+        Thread t = new Thread(gameManager); // TODO: check if we really need an attribute for this
+        t.start();
     }
 
     public synchronized byte getNbPlayers() {
