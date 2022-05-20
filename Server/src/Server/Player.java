@@ -126,6 +126,10 @@ public class Player {
         return this.score;
     }
 
+    public void setScore(int newScore) {
+        this.score = newScore;
+    }
+
     public void setPosition(int row, int col) {
         this.row = row;
         this.col = col;
@@ -141,10 +145,6 @@ public class Player {
 
     public InetAddress getAddress() {
         return address;
-    }
-
-    public Ghost getGhost() {
-        return null;
     }
 }
 

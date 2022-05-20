@@ -23,8 +23,8 @@ public class Labyrinth {
     private final short height; // number of lines
     private final short width;  // number of columns
     private final Cell[][] grid;
-    private final Ghost[] ghosts;
-    private final HashSet<Cell> nonWallCells = new HashSet<>();
+    private final ArrayList<Ghost> ghosts;
+    private int nbNonWallCells = 0;
     private byte nbGhosts;
     //    private
 
@@ -34,13 +34,12 @@ public class Labyrinth {
         this.grid = new Cell[height][width];
         generateGrid();
         print();
-        ghosts = new Ghost[nbGhosts];
+        ghosts = new ArrayList<>();
         createGhosts();
     }
 
     public void createGhosts() {
         nbGhosts = (byte) (Math.random() * (height * width) / 10);
-        int nbNonWallCells = nonWallCells.size();
         int max = (int) (nbNonWallCells * 0.5); // max = 50% of non-wall cells
         do {
             nbGhosts = (byte) (Math.random() * max);
@@ -49,7 +48,7 @@ public class Labyrinth {
         for (int i = 0; i < nbGhosts; i++) {
             row = random.nextInt(height);
             col = random.nextInt(width);
-            ghosts[i] = new Ghost(row, col);
+            ghosts.add(new Ghost(row, col));
             grid[row][col].containsGhost = true;
         }
     }
@@ -65,7 +64,7 @@ public class Labyrinth {
         int y = random.nextInt(this.width);
 
         grid[x][y].setWall(); // set cell to path
-        nonWallCells.add(grid[x][y]);
+        nbNonWallCells++;
         // Compute cell frontier and add it to a frontier collection
         Set<Cell> frontierCells = new HashSet<>(frontierCellsOf(grid[x][y]));
 
@@ -121,15 +120,15 @@ public class Labyrinth {
         int inBetweenCol = (neighbour.getColumn() + frontierCell.getColumn()) / 2;
         Cell inBetweenCell = grid[inBetweenRow][inBetweenCol];
         if (frontierCell.isWall)
-            nonWallCells.add(frontierCell);
+            nbNonWallCells++;
         frontierCell.setWall();
 
         if (inBetweenCell.isWall)
-            nonWallCells.add(inBetweenCell);
+            nbNonWallCells++;
         inBetweenCell.setWall();
 
         if (neighbour.isWall)
-            nonWallCells.add(neighbour);
+            nbNonWallCells++;
         neighbour.setWall();
     }
 
@@ -205,6 +204,18 @@ public class Labyrinth {
                 }
             }
         }
+    }
+
+    public int captureGhost(int row, int col) {
+        grid[row][col].containsGhost = false;
+        int total = 0;
+        for (Ghost ghost : ghosts) {
+            if (ghost.getRow() == row && ghost.getCol() == col) {
+                total += ghost.getScore();
+                ghosts.remove(ghost);
+            }
+        }
+        return total;
     }
 
     static class Cell {

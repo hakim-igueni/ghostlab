@@ -319,33 +319,36 @@ public class PlayerHandler implements Runnable {
             int y = this.player.getCol();
             int x = this.player.getRow();
 
-            int newx = x - d;
+            int newX = x - d;
 
-            if (newx < 0) {
-                throw new Exception("The distance" + newx + "can not be traversed");
-            } else {
-                for (int i = x; i >= newx; i--) {
-                    if (this.player.getGame().getLabyrinth().isWall(i, y)) {
-                        newx = i + 1;
-                        break;
-                    }
+            if (newX < 0) {
+                throw new Exception("The distance" + newX + "can not be traversed");
+            }
+            int newScore = this.player.getScore();
+            int port = this.player.getGame().getGameManager().getPortMulticast();
+            InetAddress address = this.player.getGame().getGameManager().getIpMulticast();
+            String mess = null;
+            for (int i = x; i >= newX; i--) {
+                if (this.player.getGame().getLabyrinth().isWall(i, y)) {
+                    newX = i + 1;
+                    break;
                 }
-                int score = this.player.getScore();
-                for (int i = x; i >= newx; i--) {
-                    int p = 0;
-                    if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
-                        p = score + 1;
-                        break;
-                    }
-                    this.out.printf("MOVEF! %03d %03d***", x, y, p);
+                if (this.player.getGame().getLabyrinth().containsGhost(i, y)) {
+                    newScore += this.player.getGame().getLabyrinth().captureGhost(i, y);
+                    mess = String.format("SCORE %s %04d %03d %03d+++", this.player.getId(), newScore, i, y);
+                    sendMessageUDP(mess, address, port);
+                    this.out.printf("MOVEF %03d %03d %04d***", x, y, newScore);
                 }
-                this.player.setRow(newx);
-                this.out.printf("MOVE! %03d %03d***", newx, y);
-
+            }
+            this.player.setScore(newScore);
+            this.player.setRow(newX);
+            if (mess == null) { // if there is no ghost captured
+                this.out.printf("MOVE! %03d %03d***", newX, y);
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-UPMOV] Error: %s\n", e.getMessage());
+            sendDUNNO();
         }
     }
 
@@ -365,15 +368,15 @@ public class PlayerHandler implements Runnable {
             int y = this.player.getCol();
             int x = this.player.getRow();
 
-            int newx = x + d;
-            for (int i = x; i <= newx; i++) {
+            int newX = x + d;
+            for (int i = x; i <= newX; i++) {
                 if (this.player.getGame().getLabyrinth().isWall(i, y)) {
-                    newx = i - 1;
+                    newX = i - 1;
                     break;
                 }
             }
             int score = this.player.getScore();
-            for (int i = x; i <= newx; i++) {
+            for (int i = x; i <= newX; i++) {
                 int p = 0;
                 if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
                     p = score + 1;
@@ -382,10 +385,10 @@ public class PlayerHandler implements Runnable {
                 this.out.printf("MOVEF! %03d %03d***", x, y, p);
             }
 
-            if (newx >= this.player.getGame().getLabyrinthHeight()) {
-                throw new Exception("The distance" + newx + "can not be traversed");
+            if (newX >= this.player.getGame().getLabyrinthHeight()) {
+                throw new Exception("The distance" + newX + "can not be traversed");
             } else {
-                this.player.setRow(newx);
+                this.player.setRow(newX);
                 this.out.printf("MOVE! %03d %03d***", x, y);
             }
         } catch (Exception e) {
