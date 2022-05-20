@@ -10,10 +10,10 @@ public class Labyrinth {
     public static final int MAX = 999; // todo: add max easy, medium, hard
     public static final int MIN = 12;
     private static final int[][] DIRECTIONS = { // distance of 2 to each side
-            {0, -2},  // north
-            {0, 2},  // south
-            {2, 0},  // east
-            {-2, 0},  // west
+            {0, -2}, // north
+            {0, 2}, // south
+            {2, 0}, // east
+            {-2, 0}, // west
     };
     // TODO: make sure rows and cols are < 1000
     private final short height; // number of lines
@@ -161,6 +161,10 @@ public class Labyrinth {
 
     public boolean containsPlayer(int row, int col) {
         return grid[row][col].containsPlayer;
+    }
+
+    public boolean isWall(int row, int col) {
+        return grid[row][col].isWall;
     }
 
     static class Cell {

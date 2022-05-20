@@ -8,18 +8,21 @@ import java.util.function.Consumer;
 public class Game {
     public static final int MAX_GAMES = 256; // Maximum number of games
     private static final HashSet<Byte> availableGameIds = new HashSet<>();
+
     // this HashSet is used to store the available game ids and reuse them when a game is over
     static {
         for (int i = 0; i <= 255; i++) {
             availableGameIds.add((byte) i);
         }
     }
+
     private final HashMap<String, Player> players = new HashMap<>();
     private final HashMap<String, Player> playersWhoDidntSendSTART = new HashMap<>();
     private final Labyrinth labyrinth;
     private final byte id;
     private boolean started = false;
-    private Thread gameManagerThread;
+    private GameManager gameManager;
+
 
     public Game() {
         this.id = Game.nextAvailableGameId();
@@ -39,6 +42,10 @@ public class Game {
         availableGameIds.add(id);
     }
 
+    public GameManager getGameManager() {
+        return gameManager;
+    }
+
     public byte getId() {
         return id;
     }
@@ -51,6 +58,7 @@ public class Game {
         return started;
     }
 
+
     public synchronized void removeFromPlayersWhoDidntSendSTART(Player player) {
         playersWhoDidntSendSTART.remove(player.getId());
 
@@ -62,9 +70,9 @@ public class Game {
     public synchronized void startGame() {
         this.started = true;
         ServerImpl.INSTANCE.startGame(this);
-        GameManager gameManager = new GameManager(this);
-        this.gameManagerThread = new Thread(gameManager); // TODO: check if we really need an attribute for this
-        this.gameManagerThread.start();
+        this.gameManager = new GameManager(this);
+        Thread t = new Thread(gameManager); // TODO: check if we really need an attribute for this
+        t.start();
     }
 
     public synchronized byte getNbPlayers() {
@@ -99,5 +107,10 @@ public class Game {
 
     public void sendOGAME(PrintWriter out) {
         out.printf("OGAME %c %c***", this.id, getNbPlayers());
+    }
+
+    public Labyrinth getLabyrinth() {
+        return labyrinth;
+
     }
 }

@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.Socket;
+import java.net.*;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
 import static Server.Utils.readRequest;
 
-public class PlayerHandler implements Runnable {
+public class PlayerHandler<InetAdress> implements Runnable {
     private final HashMap<String, Consumer<String[]>> beforeGameSTARTCommands = new HashMap<>();
     private final HashMap<String, Consumer<String[]>> afterGameSTARTCommands = new HashMap<>();
     private final PrintWriter out;
@@ -38,6 +38,9 @@ public class PlayerHandler implements Runnable {
         afterGameSTARTCommands.put("RIMOV", this::treatRIMOVRequest);
         afterGameSTARTCommands.put("GLIS?", this::treatGLISRequest);
         afterGameSTARTCommands.put("IQUIT", this::treatIQUITRequest);
+        afterGameSTARTCommands.put("MALL?", this::treatMALLRequest);
+        afterGameSTARTCommands.put("SEND!", this::treatSENDRequest);
+
     }
 
 
@@ -88,6 +91,13 @@ public class PlayerHandler implements Runnable {
 
     public boolean isInvalidd(String d) {
         return !d.matches("\\d{3}");
+    }
+
+    public boolean isInvalidmess(String mess) {
+        if (mess.length() > 200) {
+            return false;
+        }
+        return !mess.contains("+++");
     }
 
     private void treatNEWPLRequest(String[] args) {
@@ -306,12 +316,19 @@ public class PlayerHandler implements Runnable {
             int y = this.player.getCol();
             int x = this.player.getRow();
 
-            int dist = x - d;
-            if (dist < 0) {
-                throw new Exception("The distance" + dist + "can not be traversed");
+            int newx = x - d;
+
+            if (newx < 0) {
+                throw new Exception("The distance" + newx + "can not be traversed");
             } else {
-                this.player.setRow(dist);
-                this.out.printf("MOVE! %03d %03d***", x, y);
+                for (int i = x; i >= newx; i--) {
+                    if (this.player.getGame().getLabyrinth().isWall(i, y)) {
+                        newx = i + 1;
+                        break;
+                    }
+                }
+                this.player.setRow(newx);
+                this.out.printf("MOVE! %03d %03d***", newx, y);
 
             }
 
@@ -336,11 +353,17 @@ public class PlayerHandler implements Runnable {
             int y = this.player.getCol();
             int x = this.player.getRow();
 
-            int dist = x + d;
-            if (dist >= this.player.getGame().getLabyrinthHeight()) {
-                throw new Exception("The distance" + dist + "can not be traversed");
+            int newx = x + d;
+            for (int i = x; i >= newx; i++) {
+                if (this.player.getGame().getLabyrinth().isWall(i, y)) {
+                    newx = i - 1;
+                    break;
+                }
+            }
+            if (newx >= this.player.getGame().getLabyrinthHeight()) {
+                throw new Exception("The distance" + newx + "can not be traversed");
             } else {
-                this.player.setRow(dist);
+                this.player.setRow(newx);
                 this.out.printf("MOVE! %03d %03d***", x, y);
             }
         } catch (Exception e) {
@@ -364,11 +387,19 @@ public class PlayerHandler implements Runnable {
             int y = this.player.getCol();
             int x = this.player.getRow();
 
-            int dist = y + d;
-            if (dist >= this.player.getGame().getLabyrinthWidth()) {
-                throw new Exception("The distance" + dist + "can not be traversed");
+            int newy = y + d;
+
+
+            if (newy >= this.player.getGame().getLabyrinthWidth()) {
+                throw new Exception("The distance" + newy + "can not be traversed");
             } else {
-                this.player.setRow(dist);
+                for (int i = y; i >= newy; i++) {
+                    if (this.player.getGame().getLabyrinth().isWall(x, i)) {
+                        newy = i - 1;
+                        break;
+                    }
+                }
+                this.player.setRow(newy);
                 this.out.printf("MOVE! %03d %03d***", x, y);
 
             }
@@ -393,11 +424,17 @@ public class PlayerHandler implements Runnable {
             int y = this.player.getCol();
             int x = this.player.getRow();
 
-            int dist = y - d;
-            if (dist < 0) {
-                throw new Exception("The distance" + dist + "can not be traversed");
+            int newy = y - d;
+            if (newy < 0) {
+                throw new Exception("The distance" + newy + "can not be traversed");
             } else {
-                this.player.setRow(dist);
+                for (int i = y; i >= newy; i--) {
+                    if (this.player.getGame().getLabyrinth().isWall(x, i)) {
+                        newy = i + 1;
+                        break;
+                    }
+                }
+                this.player.setRow(newy);
                 this.out.printf("MOVE! %03d %03d***", x, y);
 
             }
@@ -451,6 +488,84 @@ public class PlayerHandler implements Runnable {
             // close the connection
             this.socket.close();
             System.out.printf("[Ans-IQUIT] Player %s left the game %d\n", this.player.getId(), g.getId());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void treatMALLRequest(String[] args) {
+        // MALL? mess***
+        try {
+            if (args.length != 2) {
+                throw new Exception("MALL? request must have 1 argument");
+            }
+            //verify the message
+            if (isInvalidmess(args[1])) {
+                throw new Exception("Message must have at least 199 characters");
+            }
+            //send the message to all players
+            String mess = args[1];
+            int port = this.player.getGame().getGameManager().getPortMulticast();
+            InetAddress address = this.player.getGame().getGameManager().getIpMulticast();
+            DatagramSocket dso = new DatagramSocket();
+            byte[] data;
+            data = mess.getBytes();
+            InetSocketAddress ia = new InetSocketAddress(address, port);
+            DatagramPacket paquet = new DatagramPacket(data, data.length, ia);
+            dso.send(paquet);
+            this.out.printf("MALL! ***");
+
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void treatSENDRequest(String[] args) {
+        // SEND id mess***
+        try {
+            if (args.length != 2) {
+                throw new Exception("SEND? request must have 2 arguments");
+            }
+            String id = args[1];
+            if (isInvalidId(args[1])) {
+                throw new Exception("ID must have 8 alphanumeric characters");
+            }
+            System.out.printf("[Req-SEND?] Player %s requested to send a message to the player with id of his game\n", this.player.getId());
+            Game g = this.player.getGame();
+            if (g == null) {
+                System.out.println("Player is not in a game");
+                this.out.printf("NSEND***");
+
+            } else if (isInvalidmess(args[1])) {
+                throw new Exception("Message must have at least 199 characters");
+            } else {
+                //send the message to the player
+                String mess = args[1];
+                int port = this.player.getUDPPort();
+                DatagramSocket dso = new DatagramSocket();
+                byte[] data;
+                data = mess.getBytes();
+                DatagramPacket paquet = new DatagramPacket(data, data.length, this.socket.getInetAddress(), port);
+                dso.send(paquet);
+                this.out.printf("SEND***");
+                if (!this.player.getGame().isStarted()) {
+                    // send GOBYE***
+                    this.out.printf("GOBYE***");
+                    // close the connection
+                    this.socket.close();
+                }
+
+            }
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
