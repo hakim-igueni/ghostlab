@@ -31,6 +31,7 @@ public class PlayerHandler implements Runnable {
         beforeGameSTARTCommands.put("LIST?", this::treatLISTRequest);
         beforeGameSTARTCommands.put("START", this::treatSTARTRequest);
 
+        // todo: Si le joueur envoie un de ces messages alors que la partie est finie, la partie lui répond [GOBYE***] et ferme la connexion.
         afterGameSTARTCommands.put("UPMOV", this::treatUPMOVRequest);
         afterGameSTARTCommands.put("DOMOV", this::treatDOMOVRequest);
         afterGameSTARTCommands.put("LEMOV", this::treatLEMOVRequest);
@@ -77,7 +78,7 @@ public class PlayerHandler implements Runnable {
         }
     }
 
-    public boolean isInvalidId(String id) {
+    public boolean isInvalidId(String id) { // todo: add this method to Utils
         return !id.matches("^[\\da-zA-Z ]{8}$");
     }
 

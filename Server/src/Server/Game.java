@@ -22,11 +22,11 @@ public class Game {
     private Thread gameManagerThread;
 
     public Game() {
-        this.id = (byte) Game.nextAvailableGameId();
+        this.id = Game.nextAvailableGameId();
         labyrinth = new Labyrinth();
     }
 
-    public synchronized static int nextAvailableGameId() {
+    public synchronized static byte nextAvailableGameId() {
         if (availableGameIds.size() == 0) {
             throw new RuntimeException("No more game ids available");
         }

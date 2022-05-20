@@ -7,7 +7,7 @@ public class Server {
     private static final int PORT = 4444;
 
     public static void main(String[] args) {
-
+        System.out.println("Server is running...");
         try (ServerSocket server = new ServerSocket(PORT)) {
             while (true) {
                 // TODO: make sure that both h and w don't exceed the 1000 (so < 1000)
