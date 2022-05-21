@@ -78,12 +78,14 @@ void send_GAME_request(int tcpsocket_fd, uint8_t *games, uint8_t *n)
     recv_GAMES(tcpsocket_fd, games, n);
 }
 
-void send_NEWPL_request(int tcpsocket_fd, char *username, char *port)
+void send_NEWPL_request(int tcpsocket_fd, char *username, char *port, int *in_game)
 {
     // Envoi du message "NEWPL id port***" pour créer une nouvelle partie
-    // TODO: Generer les username aléatoirement
-    // char *username = "username";
-    // char *port = "2121";
+    if (*in_game == 1)
+    {
+        printf("[NEWPL] Erreur: Le joueur est déjà dans une partie\n");
+        return;
+    }
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "NEWPL %s %s***", username, port);
@@ -107,19 +109,30 @@ void send_NEWPL_request(int tcpsocket_fd, char *username, char *port)
     if (strncmp(buffer, "REGOK", 5) == 0)
     {
         uint8_t m = (uint8_t)buffer[6];
+        *in_game = 1;
         printf("[NEWPL] L'identifiant de la nouvelle partie est %d\n", m);
     }
-    else
+    else if (strncmp(buffer, "REGNO", 5) == 0)
     {
         puts(buffer);
         printf("[NEWPL] L'inscription n'est pas prise en compte\n");
+        return;
+    }
+    else
+    {
+        printf("[NEWPL] Erreur: Le message reçu n'est pas du bon format\n");
         exit(EXIT_FAILURE);
     }
 }
 
-void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m)
-{ // TODO: use unsigned char instead of char everywhere
+void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m, int *in_game)
+{
     // Envoi du message "REGIS id port m***" pour rejoindre une partie
+    if (*in_game == 1)
+    {
+        printf("[REGIS] Vous êtes déjà dans une partie\n");
+        return;
+    }
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "REGIS %s %s %c***", username, port, m);
@@ -140,6 +153,7 @@ void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m)
     }
     if (strncmp(buffer, "REGOK", 5) == 0)
     {
+        *in_game = 1;
         printf("[REGIS] L'inscription est prise en compte\n");
         received_bytes += recv(tcpsocket_fd, buffer + 5, 5, 0);
         if (received_bytes == -1)
@@ -157,18 +171,33 @@ void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m)
             printf("[REGIS] L'inscription n'est pas faite dans la partie %d\n", m);
         }
     }
+    else if (strncmp(buffer, "REGNO", 5) == 0)
+    {
+        received_bytes += recv(tcpsocket_fd, buffer + 5, 5, 0);
+        if (received_bytes == -1)
+        {
+            perror("[REGIS] read");
+            exit(EXIT_FAILURE);
+        }
+        buffer[received_bytes] = '\0';
+        printf("[REGIS] La réponse du serveur : %s\n", buffer);
+        printf("[REGIS] L'inscription n'est pas prise en compte\n");
+        return;
+    }
     else
     {
-        puts(buffer);
-        printf("[REGIS] L'inscription n'est pas prise en compte\n");
+        printf("[REGIS] Erreur: Le message reçu n'est pas du bon format\n");
         exit(EXIT_FAILURE);
     }
-    buffer[received_bytes] = '\0';
-    printf("[REGIS] La réponse du serveur : %s\n", buffer);
 }
 
-void send_UNREG_request(int tcpsocket_fd)
+void send_UNREG_request(int tcpsocket_fd, int *in_game)
 {
+    if (*in_game == 0)
+    {
+        printf("[UNREG] Vous n'êtes pas dans une partie\n");
+        return;
+    }
     // Envoi du message "UNREG***" pour quitter une partie
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
@@ -198,6 +227,7 @@ void send_UNREG_request(int tcpsocket_fd)
         }
         uint8_t m = (uint8_t)buffer[6];
         printf("[UNREG] Le joueur s'est désinscri de la partie %d\n", m);
+        *in_game = 0;
     }
     buffer[received_bytes] = '\0';
     printf("[UNREG] La réponse du serveur : %s\n", buffer);
@@ -208,8 +238,6 @@ void send_SIZE_request(int tcpsocket_fd, uint8_t m)
     // Envoi du message "SIZE? m***" pour connaitre la taille de la grille
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    // TODO: passer en parametre la partie
-    // char m_char = '1';
     sprintf(buffer, "SIZE? %c***", m);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
@@ -237,8 +265,6 @@ void send_SIZE_request(int tcpsocket_fd, uint8_t m)
     w = (uint16_t)buffer[10];
     w = le16toh(w);
     printf("[SIZE] La taille de la grille associée à la partie %d est %d x %d\n", partie, h, w);
-
-    // Les convertir depuis le little endian
 }
 
 void send_LIST_request(int tcpsocket_fd, uint8_t m)

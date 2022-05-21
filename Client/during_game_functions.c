@@ -1,8 +1,13 @@
 #include "utils.h"
 #include "during_game_functions.h"
 
-void send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p)
+int send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p, int *in_game)
 {
+    if (*in_game == 0)
+    {
+        printf("Vous n'êtes pas dans une partie pour commencer.\n");
+        return -1;
+    }
     // Envoie du message START pour commencer la partie
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
@@ -17,7 +22,7 @@ void send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16
 
     recv_WELCO(tcpsocket_fd, udpsocket_fd);
     recv_POSIT(tcpsocket_fd, x, y);
-
+    return 0;
     // La partie a commencé
     // TODO: Comment va se dérouler la partie ?
     // recv_UDP_auto(*udpsocket_fd, tcpsocket_fd, x, y, p);
@@ -367,15 +372,21 @@ void send_IQUIT(int tcpsocket_fd)
     close(tcpsocket_fd);
 }
 
-void recv_UDP_manuel(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p)
+void *recv_UDP_manuel(void *arg)
 {
+    struct infos_player infos_player = *((struct infos_player *)arg);
+    if (infos_player.in_game == 0)
+    {
+        printf("[UDP] Vous n'êtes pas dans une partie\n");
+        return NULL;
+    }
     char id[9];
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     while (1)
     {
         // Recevoir les messages UDP
-        int received_bytes = recv(udpsocket_fd, buffer, 5, 0);
+        int received_bytes = recv(infos_player.udpsocket_fd, buffer, 5, 0);
         if (received_bytes == -1)
         {
             perror("[UDP] read");
@@ -384,34 +395,35 @@ void recv_UDP_manuel(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t 
         if (strncmp(buffer, "GHOST", 5) == 0) // si le message est "GHOST␣x␣y+++"
         {
             uint16_t xf, yf;
-            treat_GHOST(udpsocket_fd, tcpsocket_fd, xf, yf);
+            treat_GHOST(infos_player.udpsocket_fd, &xf, &yf);
         }
         else if (strncmp(buffer, "SCORE", 5) == 0) // si le message est "SCORE␣id␣p␣x␣y+++"
         {
-            treat_SCORE(udpsocket_fd, tcpsocket_fd, id);
+            treat_SCORE(infos_player.udpsocket_fd, id);
         }
         else if (strncmp(buffer, "MESSA", 5) == 0) // si le message est "MESSA␣id␣mess+++"
         {
-            treat_MESSA(udpsocket_fd);
+            treat_MESSA(infos_player.udpsocket_fd);
         }
         else if (strncmp(buffer, "MESSP", 5) == 0) // si le message est "MESSP␣id␣mess+++"
         {
-            treat_MESSP(udpsocket_fd, tcpsocket_fd, id);
+            treat_MESSP(infos_player.udpsocket_fd, id);
         }
         else if (strncmp(buffer, "ENDGA", 5) == 0) // si le message est "ENDGA␣id␣p+++"
         {
-            treat_ENDGA(udpsocket_fd);
+            treat_ENDGA(infos_player.udpsocket_fd);
             break;
         }
         else
         {
-            received_bytes += recv(udpsocket_fd, buffer + 5, BUFFER_SIZE, 0);
+            received_bytes += recv(infos_player.udpsocket_fd, buffer + 5, BUFFER_SIZE, 0);
             printf("[UDP] %s\n", buffer);
         }
     }
+    return NULL;
 }
 
-void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p)
+void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p, int *in_game)
 {
     char id[9];
     char buffer[BUFFER_SIZE];
@@ -428,15 +440,15 @@ void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *y
         if (strncmp(buffer, "GHOST", 5) == 0) // si le message est "GHOST␣x␣y+++"
         {
             uint16_t xf, yf;
-            treat_GHOST(udpsocket_fd, tcpsocket_fd, &xf, &yf);
+            treat_GHOST(udpsocket_fd, &xf, &yf);
             // Déplacer le joueur
             move_player(tcpsocket_fd, xj, yj, xf, yf, p);
         }
         else if (strncmp(buffer, "SCORE", 5) == 0) // si le message est "SCORE␣id␣p␣x␣y+++"
         {
-            treat_SCORE(udpsocket_fd, tcpsocket_fd, id);
-            // Déplacer le joueur
-            move_player(tcpsocket_fd, xj, yj, *xj, *yj, p);
+            treat_SCORE(udpsocket_fd, id);
+            // Envoyer un message au client dont l'id est id
+            send_SEND_request(tcpsocket_fd, id, "Bsahtek");
         }
         else if (strncmp(buffer, "MESSA", 5) == 0) // si le message est "MESSA␣id␣mess+++"
         {
@@ -444,7 +456,7 @@ void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *y
         }
         else if (strncmp(buffer, "MESSP", 5) == 0) // si le message est "MESSP␣id␣mess+++"
         {
-            treat_MESSP(udpsocket_fd, tcpsocket_fd, id);
+            treat_MESSP(udpsocket_fd, id);
             // Répondre au client dont l'id est id
             send_SEND_request(tcpsocket_fd, id, "Bien reçu");
         }
@@ -461,7 +473,7 @@ void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *y
     }
 }
 
-void treat_GHOST(int udpsocket_fd, int tcpsocket_fd, uint16_t *xf, uint16_t *yf)
+void treat_GHOST(int udpsocket_fd, uint16_t *xf, uint16_t *yf)
 {
     // TODO: développer la fonction treat_GHOST
     char buffer[BUFFER_SIZE];
@@ -479,7 +491,7 @@ void treat_GHOST(int udpsocket_fd, int tcpsocket_fd, uint16_t *xf, uint16_t *yf)
     printf("[treat_GHOST] GHOST␣x␣y+++ : x = %d, y = %d\n", *xf, *yf);
 }
 
-void treat_SCORE(int udpsocket_fd, int tcpsocket_fd, char *id)
+void treat_SCORE(int udpsocket_fd, char *id)
 {
     // TODO: implémenter la liste des joueurs avec leur score (leaderboard)
     char buffer[BUFFER_SIZE];
@@ -499,9 +511,6 @@ void treat_SCORE(int udpsocket_fd, int tcpsocket_fd, char *id)
     y = (uint16_t)strtol(buffer + 24, NULL, 10);
     printf("[treat_SCORE] La reponse du serveur est : %s\n", buffer);
     printf("[treat_SCORE] SCORE␣id␣p␣x␣y+++ : id = %s, p = %d, x = %d, y = %d\n", id, p, x, y);
-
-    // Envoyer un message au client dont l'id est id
-    send_SEND_request(tcpsocket_fd, id, "Bsahtek");
 }
 
 void treat_MESSA(int udpsocket_fd)
@@ -524,7 +533,7 @@ void treat_MESSA(int udpsocket_fd)
     printf("[treat_MESSA] MESSA␣id␣mess+++ : id = %s, mess = %s\n", id, mess);
 }
 
-void treat_MESSP(int udpsocket_fd, int tcpsocket_fd, char *id)
+void treat_MESSP(int udpsocket_fd, char *id)
 {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);

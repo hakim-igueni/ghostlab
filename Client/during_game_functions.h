@@ -3,7 +3,7 @@
 
 #include "utils.h"
 
-void send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p);
+int send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p, int *in_game);
 void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd);
 void recv_POSIT(int tcpsocket_fd, uint16_t *x, uint16_t *y);
 void recv_MOVE(int tcpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p);
@@ -15,12 +15,12 @@ void send_GLIS_request(int tcpsocket_fd);
 void send_MALL_request(int tcpsocket_fd, char *mess);
 void send_SEND_request(int tcpsocket_fd, char *id, char *mess);
 void send_IQUIT(int tcpsocket_fd);
-void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p);
-void recv_UDP_manuel(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p);
-void treat_GHOST(int udpsocket_fd, int tcpsocket_fd, uint16_t *xf, uint16_t *yf);
-void treat_SCORE(int udpsocket_fd, int tcpsocket_fd, char *id);
+void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p, int *in_game);
+void *recv_UDP_manuel(void *arg);
+void treat_GHOST(int udpsocket_fd, uint16_t *xf, uint16_t *yf);
+void treat_SCORE(int udpsocket_fd, char *id);
 void treat_MESSA(int udpsocket_fd);
-void treat_MESSP(int udpsocket_fd, int tcpsocket_fd, char *id);
+void treat_MESSP(int udpsocket_fd, char *id);
 void treat_ENDGA(int udpsocket_fd);
 void move_player(int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t xf, uint16_t yf, uint16_t *p);
 
