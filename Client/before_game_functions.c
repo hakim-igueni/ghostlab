@@ -254,16 +254,29 @@ void send_SIZE_request(int tcpsocket_fd, uint8_t m)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    printf("[SIZE] La réponse du serveur : %s\n", buffer);
+    if (strncmp(buffer, "DUNNO", 5) == 0)
+    {
+        printf("[SIZE] La réponse du serveur : %s\n", buffer);
+        printf("[SIZE] La partie %d n'existe pas\n", m);
+    }
+    else if (strncmp(buffer, "SIZE!", 5) == 0)
+    {
+        printf("[SIZE] La réponse du serveur : %s\n", buffer);
 
-    // Extraire la taille de la grille
-    uint8_t partie = (uint8_t)buffer[6];
-    uint16_t h, w;
-    h = buffer[8];
-    h += buffer[9] * 256;
-    w = buffer[11];
-    w += buffer[12] * 256;
-    printf("[SIZE] La taille de la grille associée à la partie %d est %d x %d\n", partie, w, h);
+        // Extraire la taille de la grille
+        uint8_t partie = (uint8_t)buffer[6];
+        uint16_t h, w;
+        h = buffer[8];
+        h += buffer[9] * 256;
+        w = buffer[11];
+        w += buffer[12] * 256;
+        printf("[SIZE] La taille de la grille associée à la partie %d est %d x %d\n", partie, w, h);
+    }
+    else
+    {
+        printf("[SIZE] Erreur: Le message reçu n'est pas du bon format\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void send_LIST_request(int tcpsocket_fd, uint8_t m)

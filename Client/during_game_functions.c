@@ -39,9 +39,12 @@ void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
     }
     buffer[received_bytes] = '\0';
     printf("[WELCO] La réponse du serveur : %s\n", buffer);
+    uint16_t h, w;
     uint8_t m = (uint8_t)buffer[6];
-    uint16_t h = (uint16_t)strtol(buffer + 8, NULL, 10);
-    uint16_t w = (uint16_t)strtol(buffer + 11, NULL, 10);
+    h = buffer[8];
+    h += buffer[9] * 256;
+    w = buffer[11];
+    w += buffer[12] * 256;
     uint8_t f = (uint8_t)buffer[14];
     char ip[16];
     strncpy(ip, buffer + 16, 15);
