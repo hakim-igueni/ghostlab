@@ -41,9 +41,8 @@ public class Game {
 //        if (availableGameIds.size() == 0) {
 //            throw new RuntimeException("No more game ids available");
 //        }
-        byte id = (byte) nbGames;
         nbGames++;
-        return id;
+        return (byte) nbGames;
     }
 
     public int getMaxScore() {
