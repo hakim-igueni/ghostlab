@@ -419,8 +419,8 @@ public class PlayerHandler implements Runnable {
     private void treatGLISRequest(String[] args) {
         // GLIS?***
         try {
-            if (args.length != 2) {
-                throw new Exception("GLIS? request must have 1 argument: LIST? m");
+            if (args.length != 1) {
+                throw new Exception("GLIS? request must have 1 argument: GLIS?");
             }
             System.out.printf("[Req-GLIS?] Player %s requested list of players of his game\n", this.player.getId());
             Game g = this.player.getGame();
