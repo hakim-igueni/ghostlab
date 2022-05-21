@@ -167,10 +167,14 @@ public class PlayerHandler implements Runnable {
             this.player.setPort(port);
             byte m = args[3].getBytes()[0]; // TODO: check if args[3] is a single byte
             System.out.printf("[Req-REGIS] Player %s is trying to join game %d\n", id, m);
-            if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
+            if (ServerImpl.INSTANCE.isStartedGame(m)) {
                 System.out.printf("[Req-REGIS] Error: Game %d is already started\n", m);
                 this.out.printf("REGNO***");
                 return;
+            }
+            if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
+                System.out.printf("[Req-REGIS] Error: Game %d does not exist\n", m);
+                this.out.printf("REGNO***");
             }
             if (ServerImpl.INSTANCE.isPlayerConnected(id)) {
                 throw new Exception("ID is already used");

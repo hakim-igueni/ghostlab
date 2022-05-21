@@ -86,4 +86,8 @@ public class ServerImpl {
     public synchronized void forEachNotStartedGame(Consumer<Game> consumer) {
         notStartedGames.forEach((k, v) -> consumer.accept(v));
     }
+
+    public boolean isStartedGame(byte m) {
+        return startedGames.containsKey(m);
+    }
 }
