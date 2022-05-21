@@ -182,7 +182,7 @@ public class Labyrinth implements Runnable {
             row = random.nextInt(height);
             col = random.nextInt(width);
         } while (grid[row][col].isWall);
-        grid[row][col].containsPlayer = true;
+        incrNbPlayers(row, col);
         player.setPosition(row, col);
     }
 
@@ -201,7 +201,7 @@ public class Labyrinth implements Runnable {
                     distance = random.nextInt(ghost.getSpeed() + 1);
                     newRow = oldRow + (random.nextBoolean() ? 1 : -1) * distance;
                 }
-                if (isValidPosition(newRow, newCol) && !grid[newRow][newCol].isWall && !grid[newRow][newCol].containsPlayer) {
+                if (isValidPosition(newRow, newCol) && !isWall(newRow, newCol) && !containsPlayer(newRow, newCol)) {
                     grid[oldRow][oldCol].decrNbGhosts();
                     ghost.setPosition(newRow, newCol);
                     grid[newRow][newCol].incrNbGhosts();
@@ -360,7 +360,6 @@ public class Labyrinth implements Runnable {
         private boolean isWall;
         private volatile int nbGhosts = 0;
         private volatile int nbPlayers = 0;
-        private volatile boolean containsPlayer = false;
 
         public Cell(int row, int column, boolean isWall) {
             this.row = row;
