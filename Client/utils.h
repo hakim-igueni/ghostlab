@@ -18,5 +18,6 @@
 
 void genarate_username(char *username, int size);
 void generate_port(char *port);
+void complete_number(uint16_t number, char *number_completed);
 
 #endif

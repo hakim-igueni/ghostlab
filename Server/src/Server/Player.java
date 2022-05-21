@@ -94,7 +94,9 @@ public class Player {
 
     public void sendPOSIT() {
         // send [POSIT id x y***]
-        this.out.printf("POSIT %s %03d %03d***", this.id, this.row, this.col);
+        String mess = String.format("POSIT %s %03d %03d***", this.id, this.row, this.col);
+        this.out.printf(mess);
+        System.out.println(mess);
     }
 
     public void sendPLAYR(PrintWriter dest) {
@@ -144,19 +146,19 @@ public class Player {
     }
 
     public boolean moveUP(int d) throws Exception {
-        return game.getGameManager().movePlayerUP(this, d);
+        return game.getLabyrinth().movePlayerUP(this, d);
     }
 
     public boolean moveDOWN(int d) throws Exception {
-        return game.getGameManager().movePlayerDOWN(this, d);
+        return game.getLabyrinth().movePlayerDOWN(this, d);
     }
 
     public boolean moveLEFT(int d) throws Exception {
-        return game.getGameManager().movePlayerLEFT(this, d);
+        return game.getLabyrinth().movePlayerLEFT(this, d);
     }
 
     public boolean moveRIGHT(int d) throws Exception {
-        return game.getGameManager().movePlayerRIGHT(this, d);
+        return game.getLabyrinth().movePlayerRIGHT(this, d);
     }
 }
 

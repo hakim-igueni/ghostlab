@@ -1,17 +1,27 @@
 package Server;
 
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class Game {
     private static final HashSet<Byte> availableGameIds = new HashSet<>();
+    private static InetAddress lastGivenMulticastAddress;
+    private static int lastGivenMulticastPort;
 
     // this HashSet is used to store the available game ids and reuse them when a game is over
     static {
         for (int i = 0; i <= 255; i++) {
             availableGameIds.add((byte) i);
+        }
+        try {
+            lastGivenMulticastAddress = InetAddress.getByName("225.0.0.0");
+            lastGivenMulticastPort = 1024;
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -21,8 +31,9 @@ public class Game {
     private final byte id;
     private boolean started = false; // todo: does it need to be volatile?
     private volatile boolean finished = false; // todo: does it need to be volatile?
-    private GameManager gameManager;
     private int maxScore = 0;
+    private InetAddress ipMulticast;
+    private int portMulticast;
 
     public Game() {
         this.id = Game.nextAvailableGameId();
@@ -44,10 +55,6 @@ public class Game {
 
     public int getMaxScore() {
         return maxScore;
-    }
-
-    public GameManager getGameManager() {
-        return gameManager;
     }
 
     public byte getId() {
@@ -85,17 +92,56 @@ public class Game {
 
     public synchronized void removeFromPlayersWhoDidntSendSTART(Player player) {
         playersWhoDidntSendSTART.remove(player.getId());
-
         if (playersWhoDidntSendSTART.size() == 0) {
             startGame();
         }
     }
 
+    private int getNextMulticastPort() { // todo: check if the port is already used
+        lastGivenMulticastPort++;
+        if (lastGivenMulticastPort == 10000) {
+            throw new RuntimeException("No more multicast ports available"); // TODO: treat this properly
+        }
+        return lastGivenMulticastPort;
+    }
+
+    /* Generate the multicast address for the game */
+    private InetAddress getNextMulticastAddress() { // todo: check if the address is already used 	isReachable
+        byte[] lastMCAdd = lastGivenMulticastAddress.getAddress();
+        lastMCAdd[3]++;
+        if (lastMCAdd[3] == 255) {
+            lastMCAdd[2]++;
+            lastMCAdd[3] = 0;
+            if (lastMCAdd[2] == 255) {
+                lastMCAdd[1]++;
+                lastMCAdd[2] = 0;
+                if (lastMCAdd[1] == 255) {
+                    lastMCAdd[0]++;
+                    if (lastMCAdd[0] == 232) {
+                        lastMCAdd[0] += 2;
+                    } else if (lastMCAdd[0] == 239) {
+                        throw new RuntimeException("No more multicast addresses available"); // TODO: treat this properly
+                    }
+                    lastMCAdd[1] = 0;
+                }
+            }
+        }
+        try {
+            lastGivenMulticastAddress = InetAddress.getByAddress(lastMCAdd);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e); // should never happen
+        }
+        return lastGivenMulticastAddress;
+    }
+
     public synchronized void startGame() {
         this.started = true;
         ServerImpl.INSTANCE.startGame(this);
-        this.gameManager = new GameManager(this);
-        Thread t = new Thread(gameManager); // TODO: check if we really need an attribute for this
+        ipMulticast = getNextMulticastAddress();
+        portMulticast = getNextMulticastPort();
+        sendWELCOtoAllPlayers();
+        sendPOSITtoAllPlayers();
+        Thread t = new Thread(labyrinth); // TODO: check if we really need an attribute for this
         t.start();
     }
 
@@ -157,5 +203,26 @@ public class Game {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    public void sendWELCOtoAllPlayers() {
+        forEachPlayer(player -> player.sendWELCO(ipMulticast, portMulticast));
+    }
+
+    public void sendPOSITtoAllPlayers() {
+        // todo: make sure to respect the rules of the game (not place the player on a wall, not place the player on another player, ...)
+        // send the POSIT message to all players
+        forEachPlayer(player -> {
+            getLabyrinth().placePlayer(player);
+            player.sendPOSIT();
+        });
+    }
+
+    public InetAddress getIpMulticast() {
+        return ipMulticast;
+    }
+
+    public int getPortMulticast() {
+        return portMulticast;
     }
 }

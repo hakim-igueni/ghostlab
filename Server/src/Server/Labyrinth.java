@@ -9,7 +9,7 @@ import static Server.Utils.sendMessageUDP;
  * Adapted from the code
  * <a href="https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>
  */
-public class Labyrinth {
+public class Labyrinth implements Runnable {
     public static final int MAX = 150; // todo: add max easy, medium, hard
     public static final int MIN = 12;
     private static final int[][] DIRECTIONS = { // distance of 2 to each side
@@ -41,7 +41,7 @@ public class Labyrinth {
 
     public void createGhosts() {
         int max = (int) (nbNonWallCells * 0.5); // max = 50% of non-wall cells
-        int nbGhosts = ((int) (Math.random() * max) + 1) % 256; // 1 to max ghosts
+        int nbGhosts = ((int) (Math.random() * max) + 1) % 256;
         int row, col;
         for (int i = 0; i < nbGhosts; i++) {
             row = random.nextInt(height);
@@ -209,6 +209,18 @@ public class Labyrinth {
                     break;
                 }
             }
+            try {
+                Thread.sleep(1000); // sleep 5 seconds
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void run() {
+        while (this.game.isRunning()) {
+            moveGhosts(this.game.getIpMulticast(), this.game.getPortMulticast());
         }
     }
 
@@ -244,6 +256,106 @@ public class Labyrinth {
 //        return total;
     }
 
+    public boolean movePlayerUP(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newX = x - d;
+        if (newX < 0) {
+            throw new Exception("The distance d=" + d + " can not be traversed");
+        }
+        int oldScore = player.getScore();
+        for (int i = x; i >= newX; i--) {
+            if (grid[i][y].isWall) {
+                newX = i + 1;
+                break;
+            }
+            if (containsGhost(i, y)) {
+                captureGhosts(i, y, player, this.game.getIpMulticast(), this.game.getPortMulticast());
+            }
+        }
+        decrNbPlayers(x, y);
+        incrNbPlayers(newX, y);
+        player.setRow(newX);
+        return oldScore < player.getScore(); // return true if a message has been sent i.e. a ghost has been captured
+    }
+
+    public boolean movePlayerDOWN(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newX = x + d;
+        if (newX >= getHeight()) {
+            throw new Exception("The distance" + d + "can not be traversed");
+        }
+        int oldScore = player.getScore();
+        for (int i = x; i <= newX; i++) {
+            if (grid[i][y].isWall) {
+                newX = i - 1;
+                break;
+            }
+            if (containsGhost(i, y)) {
+                captureGhosts(i, y, player, this.game.getIpMulticast(), this.game.getPortMulticast());
+            }
+        }
+        decrNbPlayers(x, y);
+        incrNbPlayers(newX, y);
+        player.setRow(newX);
+        return oldScore < player.getScore(); // return true if a message has been sent i.e. a ghost has been captured
+    }
+
+    public boolean movePlayerLEFT(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newY = y - d;
+        if (newY < 0) {
+            throw new Exception("The distance" + d + "can not be traversed");
+        }
+        int oldScore = player.getScore();
+        for (int i = y; i >= newY; i--) {
+            if (grid[x][i].isWall) {
+                newY = i + 1;
+                break;
+            }
+            if (containsGhost(x, i)) {
+                captureGhosts(x, i, player, this.game.getIpMulticast(), this.game.getPortMulticast());
+            }
+        }
+        decrNbPlayers(x, y);
+        incrNbPlayers(x, newY);
+        player.setCol(newY);
+        return oldScore < player.getScore(); // return true if a message has been sent i.e. a ghost has been captured
+    }
+
+    public boolean movePlayerRIGHT(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newY = y + d;
+        if (newY >= getWidth()) {
+            throw new Exception("The distance" + d + "can not be traversed");
+        }
+        int oldScore = player.getScore();
+        for (int i = y; i <= newY; i++) {
+            if (grid[x][i].isWall) {
+                newY = i - 1;
+                break;
+            }
+            if (containsGhost(x, i)) {
+                captureGhosts(x, i, player, this.game.getIpMulticast(), this.game.getPortMulticast());
+            }
+        }
+        decrNbPlayers(x, y);
+        incrNbPlayers(x, newY);
+        player.setCol(newY);
+        return oldScore < player.getScore(); // return true if a message has been sent i.e. a ghost has been captured
+    }
+
     static class Cell {
         private final int row, column;
         private boolean isWall;
@@ -269,20 +381,12 @@ public class Labyrinth {
             return column;
         }
 
-        public int getNbGhosts() {
-            return nbGhosts;
-        }
-
         public synchronized void incrNbGhosts() {
             nbGhosts++;
         }
 
         public synchronized void decrNbGhosts() {
             nbGhosts--;
-        }
-
-        public int getNbPlayers() {
-            return nbPlayers;
         }
 
         public synchronized void incrNbPlayers() {
