@@ -346,7 +346,6 @@ public class PlayerHandler implements Runnable {
                     this.player.getRow(), this.player.getCol());
         } catch (Exception e) {
             System.out.printf("[Req-UPMOV] Error: %s\n", e.getMessage());
-            e.printStackTrace();
             sendDUNNO();
         }
     }
