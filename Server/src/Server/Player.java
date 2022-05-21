@@ -1,12 +1,10 @@
 package Server;
 
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 
 public class Player {
     private final PrintWriter out;
-    private final InputStreamReader in; // todo: delete this if not needed
     private String id = null;
     private InetAddress address;
     private int UDPPort = -1;
@@ -17,9 +15,8 @@ public class Player {
     private int row;
     private int col;
 
-    public Player(InputStreamReader in, PrintWriter out, InetAddress inetAddress) {
+    public Player(PrintWriter out, InetAddress inetAddress) {
         this.out = out;
-        this.in = in;
         this.address = inetAddress;
     }
 

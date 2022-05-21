@@ -25,7 +25,7 @@ public class PlayerHandler implements Runnable {
         this.socket = s;
         this.out = new PrintWriter(new OutputStreamWriter(s.getOutputStream()), true);
         this.in = new InputStreamReader(s.getInputStream());
-        this.player = new Player(in, out, socket.getInetAddress());
+        this.player = new Player(out, socket.getInetAddress());
         beforeGameSTARTCommands.put("NEWPL", this::treatNEWPLRequest);
         beforeGameSTARTCommands.put("REGIS", this::treatREGISRequest);
         beforeGameSTARTCommands.put("UNREG", this::treatUNREGRequest);
@@ -58,7 +58,6 @@ public class PlayerHandler implements Runnable {
 
     public void exit() {
         System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
-        boolean b = this.player.unregister();
         try {
             socket.close();
         } catch (IOException e) {

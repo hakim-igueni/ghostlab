@@ -225,7 +225,6 @@ public class Labyrinth implements Runnable {
     }
 
     public void captureGhosts(int row, int col, Player player, InetAddress ipMulticast, int portMulticast) {
-        int total = 0;
         String mess;
         Iterator<Ghost> it = ghosts.iterator();
         while (it.hasNext()) {

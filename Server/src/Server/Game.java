@@ -14,7 +14,7 @@ public class Game {
 
     // this HashSet is used to store the available game ids and reuse them when a game is over
     static {
-        for (int i = 0; i <= 255; i++) {
+        for (int i = 1; i <= 255; i++) {
             availableGameIds.add((byte) i);
         }
         try {
