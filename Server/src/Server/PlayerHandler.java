@@ -173,7 +173,7 @@ public class PlayerHandler implements Runnable {
                 return;
             }
             if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
-                throw new Exception("Game " + m + "does not exist");
+                throw new Exception("Game " + m + " does not exist");
             }
             if (ServerImpl.INSTANCE.isPlayerConnected(id)) {
                 throw new Exception("ID is already used");
@@ -474,7 +474,8 @@ public class PlayerHandler implements Runnable {
             String mess = args[1];
             int port = this.player.getGame().getPortMulticast();
             InetAddress address = this.player.getGame().getIpMulticast();
-            sendMessageUDP(String.format("MESSA %s %s+++", this.player.getId(), mess), address, port);
+            String m = String.format("MESSA %s %s+++", this.player.getId(), mess);
+            sendMessageUDP(m, address, port);
 
             // send MALL! mess***
             this.out.printf("MALL!***");
