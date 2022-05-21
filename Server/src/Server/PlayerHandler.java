@@ -173,8 +173,7 @@ public class PlayerHandler implements Runnable {
                 return;
             }
             if (!ServerImpl.INSTANCE.isNotStartedGame(m)) {
-                System.out.printf("[Req-REGIS] Error: Game %d does not exist\n", m);
-                this.out.printf("REGNO***");
+                throw new Exception("Game " + m + "does not exist");
             }
             if (ServerImpl.INSTANCE.isPlayerConnected(id)) {
                 throw new Exception("ID is already used");
