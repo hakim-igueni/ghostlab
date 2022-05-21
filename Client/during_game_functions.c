@@ -31,7 +31,7 @@ void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     printf("[WELCO] Attente de la réponse du serveur...\n");
-    int received_bytes = recv(tcpsocket_fd, buffer, 39, 0);
+    int received_bytes = recv(tcpsocket_fd, buffer, 40, 0);
     if (received_bytes == -1)
     {
         perror("[WELCO] read");
@@ -125,6 +125,7 @@ void recv_MOVE(int tcpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
+    printf("[MOVE] La réponse du serveur : %s\n", buffer);
     if (buffer[4] == 'F')
     {
         // si le joueur a capturé un fantome, on met à jour le nombre de points

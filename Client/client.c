@@ -225,6 +225,7 @@ int main(int argc, char *argv[])
                     printf("d: ");
                     scanf("%hd", &d);
                     complete_number(d, d_completed);
+                    printf("%s", d_completed);
                     send_UPMOV_request(tcpsocket_fd, d_completed, &infos_player.x, &infos_player.y, &infos_player.p);
                     break;
                 case 3:
