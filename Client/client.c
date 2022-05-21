@@ -1,13 +1,6 @@
 #include "utils.h"
 #include "before_game_functions.h"
 #include "during_game_functions.h"
-// // ------------------- LES MESSAGES TCP -------------------   //
-// /* Dans cette partie la socket qu'on spécifie est celle du serveur*/
-
-// // TODO: verfier a chaque fois que le message recu n'est pas GOBYE
-
-// //-----------------LES MESSAGE UDP-----------------//
-// /* Dans cette partie on spécifie la socket de la partie*/
 
 int main(int argc, char *argv[])
 {
@@ -119,8 +112,6 @@ int main(int argc, char *argv[])
     //     // printf("\n[---Début de la partie---]\n");
     //     // send_START_request(tcpsocket_fd, &udpsocket_fd, &x, &y, &p);
     //     // recv_UDP_auto(udpsocket_fd, tcpsocket_fd, &x, &y, &p);
-    //     // // // TODO: Répondre aux messages UDP
-    //     // // // TODO: Répondre aux message GHOST (Partiellement)
     //     // // // TODO: Régler les types uint16
     //     // recv_UDP(udpsocket_fd, tcpsocket_fd, &x, &y, &p);
     //     // // sleep(10);
@@ -159,11 +150,14 @@ int main(int argc, char *argv[])
             port[4] = '\0';
             // fgets(port, 4, stdin);
             send_NEWPL_request(tcpsocket_fd, username, port, &infos_player.in_game);
+            strncpy(infos_player.username, username, 8);
             break;
         case 3:
             printf("\n[---Rejoindre une partie---]\n");
             printf("3. REGIS id port m***\n");
             printf("id: ");
+            // genarate_username(infos_player.username, 8);
+            // generate_port(infos_player.port);
             scanf("%s", username);
             username[8] = '\0';
             // fgets(username, 8, stdin);
@@ -173,7 +167,9 @@ int main(int argc, char *argv[])
             // fgets(port, 4, stdin);
             printf("\nm: ");
             scanf("%hhd", &m);
+            printf("%d", m);
             send_REGIS_request(tcpsocket_fd, username, port, m, &infos_player.in_game);
+            strncpy(infos_player.username, username, 8);
             break;
         case 4:
             printf("\n[---Demande de la liste des joueurs---]\n");
@@ -201,9 +197,7 @@ int main(int argc, char *argv[])
                 break;
             };
             pthread_t thread;
-            // TODO: TRAITER LES POINTEURS DE LA FONCTION
             pthread_create(&thread, NULL, recv_UDP_manuel, &infos_player);
-            // TODO: afficher la listes des commandes et faire comme la premiere partie
             while (1)
             {
                 printf("\n1. GLIS?***\n");

@@ -23,9 +23,6 @@ int send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16_
     recv_WELCO(tcpsocket_fd, udpsocket_fd);
     recv_POSIT(tcpsocket_fd, x, y);
     return 0;
-    // La partie a commencé
-    // TODO: Comment va se dérouler la partie ?
-    // recv_UDP_auto(*udpsocket_fd, tcpsocket_fd, x, y, p);
 }
 
 void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
@@ -129,7 +126,7 @@ void recv_MOVE(int tcpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p)
     buffer[received_bytes] = '\0';
     if (buffer[4] == 'F')
     {
-        // TODO: si le joueur a capturé un fantome, on met à jour le nombre de points
+        // si le joueur a capturé un fantome, on met à jour le nombre de points
         // Le joueur a capturé un fantome
         // On reçoit la suite sous la forme " x y p***"
         received_bytes = recv(tcpsocket_fd,
@@ -475,7 +472,6 @@ void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *y
 
 void treat_GHOST(int udpsocket_fd, uint16_t *xf, uint16_t *yf)
 {
-    // TODO: développer la fonction treat_GHOST
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     int received_bytes = 5;
@@ -493,7 +489,6 @@ void treat_GHOST(int udpsocket_fd, uint16_t *xf, uint16_t *yf)
 
 void treat_SCORE(int udpsocket_fd, char *id)
 {
-    // TODO: implémenter la liste des joueurs avec leur score (leaderboard)
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     int received_bytes = 5;
@@ -573,7 +568,6 @@ void treat_ENDGA(int udpsocket_fd)
         perror("[treat_ENDGA] close");
         exit(EXIT_FAILURE);
     }
-    // TODO: fermer la connexion UDP et deconnecter le joueur
 }
 
 void move_player(int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t xf, uint16_t yf, uint16_t *p)
@@ -581,7 +575,6 @@ void move_player(int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t xf, uint
     // uint16_t x, y;
     // x = *xj;
     // y = *yj;
-    // TODO: à ameliorer
     char d[4]; // déplacement
     if (xf > *xj)
     {

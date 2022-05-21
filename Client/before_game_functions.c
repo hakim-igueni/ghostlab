@@ -37,7 +37,6 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games, uint8_t *n)
 
         // Recevoir le message "OGAME m s***"
         // m le numéro de la partie et s le nombre de joueurs
-        // TODO: Assurer que le message commence par OGAME et fini par ***
         received_bytes = recv(tcpsocket_fd,
                               buffer, 12, 0);
         if (received_bytes == -1)
@@ -63,8 +62,8 @@ void recv_GAMES(int tcpsocket_fd, uint8_t *games, uint8_t *n)
 
 void send_GAME_request(int tcpsocket_fd, uint8_t *games, uint8_t *n)
 {
-    char buffer[BUFFER_SIZE];
     // Envoi du message "GAME?***"
+    char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "GAME?***");
     printf("[GAME] Le message à envoyer au serveur : %s\n", buffer);
@@ -97,7 +96,6 @@ void send_NEWPL_request(int tcpsocket_fd, char *username, char *port, int *in_ga
     }
 
     // Recevoir la reponse du serveur
-    // Supposons que le serveur nous renvoie le message "REGOK m***"
     memset(buffer, 0, BUFFER_SIZE);
     int received_bytes = recv(tcpsocket_fd, buffer, 10, 0);
     if (received_bytes == -1)
@@ -143,6 +141,7 @@ void send_REGIS_request(int tcpsocket_fd, char *username, char *port, uint8_t m,
         perror("[REGIS] send");
         exit(EXIT_FAILURE);
     }
+
     // Recevoir la reponse du serveur
     memset(buffer, 0, BUFFER_SIZE);
     int received_bytes = recv(tcpsocket_fd, buffer, 5, 0);
@@ -260,11 +259,11 @@ void send_SIZE_request(int tcpsocket_fd, uint8_t m)
     // Extraire la taille de la grille
     uint8_t partie = (uint8_t)buffer[6];
     uint16_t h, w;
-    h = (uint16_t)buffer[8];
-    h = le16toh(h);
-    w = (uint16_t)buffer[10];
-    w = le16toh(w);
-    printf("[SIZE] La taille de la grille associée à la partie %d est %d x %d\n", partie, h, w);
+    h = buffer[8];
+    h += buffer[9] * 256;
+    w = buffer[11];
+    w += buffer[12] * 256;
+    printf("[SIZE] La taille de la grille associée à la partie %d est %d x %d\n", partie, w, h);
 }
 
 void send_LIST_request(int tcpsocket_fd, uint8_t m)
@@ -272,7 +271,6 @@ void send_LIST_request(int tcpsocket_fd, uint8_t m)
     // Envoi du message "LIST? m***" pour connaitre la liste des joueurs
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    // uint8_t m_char = 11;
     sprintf(buffer, "LIST? %c***", m);
     int sent_bytes = send(tcpsocket_fd, buffer, strlen(buffer), 0);
     if (sent_bytes == -1)
@@ -280,6 +278,7 @@ void send_LIST_request(int tcpsocket_fd, uint8_t m)
         perror("[LIST] send");
         exit(EXIT_FAILURE);
     }
+
     // Recevoir la reponse du serveur sous la forme "LIST! m s***"
     memset(buffer, 0, BUFFER_SIZE);
     int received_bytes = recv(tcpsocket_fd, buffer, 12, 0);
@@ -289,9 +288,16 @@ void send_LIST_request(int tcpsocket_fd, uint8_t m)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
+    if (strncmp(buffer, "LIST!", 5) != 0)
+    {
+        printf("[LIST] La réponse du serveur n'est pas du bon format\n");
+        exit(EXIT_FAILURE);
+    }
+
     printf("[LIST] La réponse du serveur : %s\n", buffer);
-    // uint8_t m = (uint8_t)buffer[6];
+    uint8_t game = (uint8_t)buffer[6];
     uint8_t s = (uint8_t)buffer[8];
+    printf("[LIST] La partie %d a %d joueurs\n", game, s);
     for (int i = 0; i < s; i++)
     {
         // recevoir les joueurs sous la forme "PLAYR id***"
