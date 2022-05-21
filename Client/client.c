@@ -285,25 +285,27 @@ int main(int argc, char *argv[])
                            "\t6. MALL? mess*** : Envoyer le message <mess> pour tout les joueurs\n"
                            "\t7. SEND? id mess*** : Envoyer le message <mess> pour tout le joueur <id>\n"
                            "\t8. IQUIT*** : Quitter la partie\n\n");
+                    break;
+                default:
+                    printf("\n[---Choix invalide---]\n");
+                    break;
                 }
-
-                break;
-            case 8:
-                printf("\n\t[---Aide et consignes---]\n"
-                       "\t1. GAME?*** : Demander la liste des parties non commencées\n"
-                       "\t2. NEWPL id port*** : Créer une nouvelle partie, <id> est votre nom d'utilisateur qui doit être\n"
-                       "\t\texactement sur 8 caractères, <port> est le numéro de votre port UDP qui doit être entre 1024 et 9999\n"
-                       "\t3. REGIS id port m*** : S'inscrire à une partie, <id> est votre nom d'utilisateur qui doit\n"
-                       "\t\têtre exactement sur 8 caractères, <port> est le numéro de votre port UDP, <m> est le numéro de la partie\n"
-                       "\t4. LIST? m*** : Demander la liste des joueurs de la partie <m>\n"
-                       "\t5. SIZE? m*** : Demander la taille du labyrinthe de la partie <m>\n"
-                       "\t6. UNREG*** : Se désinscrire de la partie <m>\n"
-                       "\t7. START*** : Commencer la partie\n\n");
-                break;
-            default:
-                printf("\n[---Choix invalide---]\n");
-                break;
             }
+        case 8:
+            printf("\n\t[---Aide et consignes---]\n"
+                   "\t1. GAME?*** : Demander la liste des parties non commencées\n"
+                   "\t2. NEWPL id port*** : Créer une nouvelle partie, <id> est votre nom d'utilisateur qui doit être\n"
+                   "\t\texactement sur 8 caractères, <port> est le numéro de votre port UDP qui doit être entre 1024 et 9999\n"
+                   "\t3. REGIS id port m*** : S'inscrire à une partie, <id> est votre nom d'utilisateur qui doit\n"
+                   "\t\têtre exactement sur 8 caractères, <port> est le numéro de votre port UDP, <m> est le numéro de la partie\n"
+                   "\t4. LIST? m*** : Demander la liste des joueurs de la partie <m>\n"
+                   "\t5. SIZE? m*** : Demander la taille du labyrinthe de la partie <m>\n"
+                   "\t6. UNREG*** : Se désinscrire de la partie <m>\n"
+                   "\t7. START*** : Commencer la partie\n\n");
+            break;
+        default:
+            printf("\n[---Choix invalide---]\n");
+            break;
         }
     }
 }
