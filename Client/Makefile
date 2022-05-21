@@ -1,5 +1,5 @@
-OBJS	= client.o before_game_functions.o during_game_functions.o
-SOURCE	= client.c before_game_functions.c during_game_functions.c
+OBJS	= client.o before_game_functions.o during_game_functions.o utils.o
+SOURCE	= client.c before_game_functions.c during_game_functions.c utils.c
 HEADER	= before_game_functions.h during_game_functions.h utils.h
 OUT	= client
 CC	 = gcc
