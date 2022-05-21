@@ -19,3 +19,18 @@ void generate_port(char *port)
     srand(time(NULL));
     sprintf(port, "%d", rand() % (9999 - 1024) + 1024);
 }
+void complete_number(uint16_t number, char *number_completed)
+{
+    if (number < 10)
+    {
+        sprintf(number_completed, "00%d", number);
+    }
+    else if (number < 100)
+    {
+        sprintf(number_completed, "0%d", number);
+    }
+    else if (number < 1000)
+    {
+        sprintf(number_completed, "%d", number);
+    }
+}

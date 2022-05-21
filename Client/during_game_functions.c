@@ -20,7 +20,7 @@ void send_START_request(int tcpsocket_fd, int *udpsocket_fd, uint16_t *x, uint16
 
     // La partie a commencé
     // TODO: Comment va se dérouler la partie ?
-    recv_UDP(*udpsocket_fd, tcpsocket_fd, x, y, p);
+    // recv_UDP_auto(*udpsocket_fd, tcpsocket_fd, x, y, p);
 }
 
 void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
@@ -367,8 +367,9 @@ void send_IQUIT(int tcpsocket_fd)
     close(tcpsocket_fd);
 }
 
-void recv_UDP(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p)
+void recv_UDP_manuel(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p)
 {
+    char id[9];
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     while (1)
@@ -382,11 +383,12 @@ void recv_UDP(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, ui
         }
         if (strncmp(buffer, "GHOST", 5) == 0) // si le message est "GHOST␣x␣y+++"
         {
-            treat_GHOST(udpsocket_fd, tcpsocket_fd, xj, yj, p);
+            uint16_t xf, yf;
+            treat_GHOST(udpsocket_fd, tcpsocket_fd, xf, yf);
         }
         else if (strncmp(buffer, "SCORE", 5) == 0) // si le message est "SCORE␣id␣p␣x␣y+++"
         {
-            treat_SCORE(udpsocket_fd, tcpsocket_fd);
+            treat_SCORE(udpsocket_fd, tcpsocket_fd, id);
         }
         else if (strncmp(buffer, "MESSA", 5) == 0) // si le message est "MESSA␣id␣mess+++"
         {
@@ -394,7 +396,7 @@ void recv_UDP(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, ui
         }
         else if (strncmp(buffer, "MESSP", 5) == 0) // si le message est "MESSP␣id␣mess+++"
         {
-            treat_MESSP(udpsocket_fd, tcpsocket_fd);
+            treat_MESSP(udpsocket_fd, tcpsocket_fd, id);
         }
         else if (strncmp(buffer, "ENDGA", 5) == 0) // si le message est "ENDGA␣id␣p+++"
         {
@@ -409,7 +411,57 @@ void recv_UDP(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, ui
     }
 }
 
-void treat_GHOST(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p)
+void recv_UDP_auto(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t *p)
+{
+    char id[9];
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    while (1)
+    {
+        // Recevoir les messages UDP
+        int received_bytes = recv(udpsocket_fd, buffer, 5, 0);
+        if (received_bytes == -1)
+        {
+            perror("[UDP] read");
+            exit(EXIT_FAILURE);
+        }
+        if (strncmp(buffer, "GHOST", 5) == 0) // si le message est "GHOST␣x␣y+++"
+        {
+            uint16_t xf, yf;
+            treat_GHOST(udpsocket_fd, tcpsocket_fd, &xf, &yf);
+            // Déplacer le joueur
+            move_player(tcpsocket_fd, xj, yj, xf, yf, p);
+        }
+        else if (strncmp(buffer, "SCORE", 5) == 0) // si le message est "SCORE␣id␣p␣x␣y+++"
+        {
+            treat_SCORE(udpsocket_fd, tcpsocket_fd, id);
+            // Déplacer le joueur
+            move_player(tcpsocket_fd, xj, yj, *xj, *yj, p);
+        }
+        else if (strncmp(buffer, "MESSA", 5) == 0) // si le message est "MESSA␣id␣mess+++"
+        {
+            treat_MESSA(udpsocket_fd);
+        }
+        else if (strncmp(buffer, "MESSP", 5) == 0) // si le message est "MESSP␣id␣mess+++"
+        {
+            treat_MESSP(udpsocket_fd, tcpsocket_fd, id);
+            // Répondre au client dont l'id est id
+            send_SEND_request(tcpsocket_fd, id, "Bien reçu");
+        }
+        else if (strncmp(buffer, "ENDGA", 5) == 0) // si le message est "ENDGA␣id␣p+++"
+        {
+            treat_ENDGA(udpsocket_fd);
+            break;
+        }
+        else
+        {
+            received_bytes += recv(udpsocket_fd, buffer + 5, BUFFER_SIZE, 0);
+            printf("[UDP] %s\n", buffer);
+        }
+    }
+}
+
+void treat_GHOST(int udpsocket_fd, int tcpsocket_fd, uint16_t *xf, uint16_t *yf)
 {
     // TODO: développer la fonction treat_GHOST
     char buffer[BUFFER_SIZE];
@@ -422,16 +474,12 @@ void treat_GHOST(int udpsocket_fd, int tcpsocket_fd, uint16_t *xj, uint16_t *yj,
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    uint16_t xf, yf;
-    xf = (uint16_t)strtol(buffer + 5, NULL, 10);
-    yf = (uint16_t)strtol(buffer + 8, NULL, 10);
-    printf("[treat_GHOST] GHOST␣x␣y+++ : x = %d, y = %d\n", xf, yf);
-
-    // Déplacer le joueur
-    move_player(tcpsocket_fd, xj, yj, xf, yf, p);
+    *xf = (uint16_t)strtol(buffer + 5, NULL, 10);
+    *yf = (uint16_t)strtol(buffer + 8, NULL, 10);
+    printf("[treat_GHOST] GHOST␣x␣y+++ : x = %d, y = %d\n", *xf, *yf);
 }
 
-void treat_SCORE(int udpsocket_fd, int tcpsocket_fd)
+void treat_SCORE(int udpsocket_fd, int tcpsocket_fd, char *id)
 {
     // TODO: implémenter la liste des joueurs avec leur score (leaderboard)
     char buffer[BUFFER_SIZE];
@@ -444,7 +492,6 @@ void treat_SCORE(int udpsocket_fd, int tcpsocket_fd)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    char id[9];
     strncpy(id, buffer + 6, 8);
     uint16_t x, y, p;
     p = (uint16_t)strtol(buffer + 15, NULL, 10);
@@ -477,7 +524,7 @@ void treat_MESSA(int udpsocket_fd)
     printf("[treat_MESSA] MESSA␣id␣mess+++ : id = %s, mess = %s\n", id, mess);
 }
 
-void treat_MESSP(int udpsocket_fd, int tcpsocket_fd)
+void treat_MESSP(int udpsocket_fd, int tcpsocket_fd, char *id)
 {
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
@@ -489,14 +536,10 @@ void treat_MESSP(int udpsocket_fd, int tcpsocket_fd)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    char id[9];
     strncpy(id, buffer + 6, 8);
     char mess[200];
     strcpy(mess, buffer + 15);
     printf("[treat_MESSP] MESSP␣id␣mess+++ : id = %s, mess = %s\n", id, mess);
-
-    // Répondre au client dont l'id est id
-    send_SEND_request(tcpsocket_fd, id, "Bien reçu");
 }
 
 void treat_ENDGA(int udpsocket_fd)
@@ -533,22 +576,22 @@ void move_player(int tcpsocket_fd, uint16_t *xj, uint16_t *yj, uint16_t xf, uint
     char d[4]; // déplacement
     if (xf > *xj)
     {
-        sprintf(d, "%d", (xf - *xj));
+        complete_number((xf - *xj), d);
         send_RIMOV_request(tcpsocket_fd, d, xj, yj, p);
     }
     else if (xf < *xj)
     {
-        sprintf(d, "%d", (*xj - xf));
+        complete_number((*xj - xf), d);
         send_LEMOV_request(tcpsocket_fd, d, xj, yj, p);
     }
     if (yf > *yj)
     {
-        sprintf(d, "%d", (yf - *yj));
-        send_UPMOV_request(tcpsocket_fd, d, xj, yj, p);
+        complete_number((yf - *yj), d);
+        send_DOMOV_request(tcpsocket_fd, d, xj, yj, p);
     }
     else if (yf < *yj)
     {
-        sprintf(d, "%d", (*yj - yf));
+        complete_number((*yj - yf), d);
         send_DOMOV_request(tcpsocket_fd, d, xj, yj, p);
     }
 }
