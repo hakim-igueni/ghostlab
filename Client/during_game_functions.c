@@ -41,10 +41,8 @@ void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
     printf("[WELCO] La réponse du serveur : %s\n", buffer);
     uint16_t h, w;
     uint8_t m = (uint8_t)buffer[6];
-    h = buffer[8];
-    h += buffer[9] * 256;
-    w = buffer[11];
-    w += buffer[12] * 256;
+    h = le_to_ho(buffer, 8);
+    w = le_to_ho(buffer, 11);
     uint8_t f = (uint8_t)buffer[14];
     char ip[16];
     strncpy(ip, buffer + 16, 15);
@@ -485,8 +483,8 @@ void treat_GHOST(int udpsocket_fd, uint16_t *xf, uint16_t *yf)
         exit(EXIT_FAILURE);
     }
     buffer[received_bytes] = '\0';
-    *xf = (uint16_t)strtol(buffer + 5, NULL, 10);
-    *yf = (uint16_t)strtol(buffer + 8, NULL, 10);
+    *xf = (uint16_t)strtol(buffer + 6, NULL, 10);
+    *yf = (uint16_t)strtol(buffer + 9, NULL, 10);
     printf("[treat_GHOST] GHOST␣x␣y+++ : x = %d, y = %d\n", *xf, *yf);
 }
 

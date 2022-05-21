@@ -32,5 +32,6 @@ struct infos_player
 void genarate_username(char *username, int size);
 void generate_port(char *port);
 void complete_number(uint16_t number, char *number_completed);
+uint16_t le_to_ho(char *str, int pos);
 
 #endif

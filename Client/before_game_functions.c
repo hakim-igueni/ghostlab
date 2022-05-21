@@ -266,10 +266,8 @@ void send_SIZE_request(int tcpsocket_fd, uint8_t m)
         // Extraire la taille de la grille
         uint8_t partie = (uint8_t)buffer[6];
         uint16_t h, w;
-        h = buffer[8];
-        h += buffer[9] * 256;
-        w = buffer[11];
-        w += buffer[12] * 256;
+        h = le_to_ho(buffer, 8);
+        w = le_to_ho(buffer, 11);
         printf("[SIZE] La taille de la grille associée à la partie %d est %d x %d\n", partie, w, h);
     }
     else

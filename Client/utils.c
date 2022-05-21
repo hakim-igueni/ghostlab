@@ -35,3 +35,11 @@ void complete_number(uint16_t number, char *number_completed)
         sprintf(number_completed, "%d", number);
     }
 }
+
+uint16_t le_to_ho(char *str, int pos)
+{
+    uint16_t h;
+    h = str[pos];
+    h += str[pos + 1] * 256;
+    return h;
+}
