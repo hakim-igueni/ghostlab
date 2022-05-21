@@ -1,34 +1,22 @@
-JFLAGS = -g
+JFLAGS= -g
 JC = javac
-JVM=java
-
-
 
 .SUFFIXES: .java .class
-
-.java .class:
+.java.class:
 	$(JC) $(JFLAGS) $*.java
 
-
 CLASSES = \
-Player.java \
-Game.java \
-Ghost.java \
-Labyrinth.java \
-Server.java \
-Utils.java \
-WelcomePlayerService.java
-
-MAIN = Server
-
+	src/Server/Player.java \
+	src/Server/Game.java \
+	src/Server/Ghost.java \
+	src/Server/Labyrinth.java \
+	src/Server/Server.java \
+	src/Server/Utils.java \
+	src/Server/ServerImpl.java\
+	src/Server/PlayerHandler.java
 
 default: classes
-
-
-classes: $(CLASSES:.java=.class)
-
-run: $(MAIN).class
-	$(JVM) $(MAIN)
+classes:$(CLASSES:.java=.class)
 
 clean:
-	$(RM)*.class
+	$(RM) *.class
