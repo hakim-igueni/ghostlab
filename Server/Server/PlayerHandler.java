@@ -326,7 +326,7 @@ public class PlayerHandler implements Runnable {
     private void treatUPMOVRequest(String[] args) {
         // UPMOV d***
         try {
-            System.out.printf("[Req-UPMOV] Player %s requested to move up with distance %d\n", this.player.getId(),
+            System.out.printf("[Req-UPMOV] Player %s requested to move up with distance %s\n", this.player.getId(),
                     args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
@@ -346,6 +346,7 @@ public class PlayerHandler implements Runnable {
                     this.player.getRow(), this.player.getCol());
         } catch (Exception e) {
             System.out.printf("[Req-UPMOV] Error: %s\n", e.getMessage());
+            e.printStackTrace();
             sendDUNNO();
         }
     }
@@ -353,7 +354,7 @@ public class PlayerHandler implements Runnable {
     private void treatDOMOVRequest(String[] args) {
         // DOMOV d***
         try {
-            System.out.printf("[Req-DOMOV] Player %s requested to move down with distance %d\n", this.player.getId(),
+            System.out.printf("[Req-DOMOV] Player %s requested to move down with distance %s\n", this.player.getId(),
                     args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
@@ -380,7 +381,7 @@ public class PlayerHandler implements Runnable {
     private void treatRIMOVRequest(String[] args) {
         // RIMOV d***
         try {
-            System.out.printf("[Req-RIMOV] Player %s requested to move right with distance %d\n", this.player.getId(),
+            System.out.printf("[Req-RIMOV] Player %s requested to move right with distance %s\n", this.player.getId(),
                     args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
@@ -408,7 +409,7 @@ public class PlayerHandler implements Runnable {
     private void treatLEMOVRequest(String[] args) {
         // LEMOV d***
         try {
-            System.out.printf("[Req-LEMOV] Player %s requested to move left with distance %d\n", this.player.getId(),
+            System.out.printf("[Req-LEMOV] Player %s requested to move left with distance %s\n", this.player.getId(),
                     args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
