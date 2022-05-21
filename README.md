@@ -42,7 +42,7 @@ Cette classe permet de vérifier la bonne syntaxe d’une requête et les caract
 
 ### Coté Client:
 
-Il a été réparti en 4 fichiers c selon les besoins du joueur dans le jeu: 
+Il a été réparti en 4 fichiers C selon les besoins du joueur dans le jeu: 
 
 ##### before_game_functions:
 
@@ -57,8 +57,6 @@ Représente le fichier principal (le joueur), qui contient la fonction main où 
 ##### during_game_functions:
 
 Cette partie du client est composé de toutes les requetes (Se déplacer au sein du labyrinthe, avoir des informations sur la partie telle que le nombre de joueurs présents dans la partie, communiquer avec d'autres joueurs de la même partie, Abandonner la partie) qu'un joueur peut envoyer au serveur durant le déroulement du jeu ainsi que les réponses du serveur et leurs traitements. La partie commence lorsque tous les joueurs de celle-ci envoient un START. 
-
-Des Méthodes de traitement ont été implémentées pour avoir un client automatique .
 
 ##### utils:
 
