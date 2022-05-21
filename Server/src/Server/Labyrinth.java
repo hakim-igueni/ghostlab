@@ -10,7 +10,7 @@ import static Server.Utils.sendMessageUDP;
  * <a href="https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>
  */
 public class Labyrinth {
-    public static final int MAX = 999; // todo: add max easy, medium, hard
+    public static final int MAX = 150; // todo: add max easy, medium, hard
     public static final int MIN = 12;
     private static final int[][] DIRECTIONS = { // distance of 2 to each side
             {0, -2}, // north
@@ -22,34 +22,32 @@ public class Labyrinth {
     // TODO: make sure rows and cols are < 1000
     private final short height; // number of lines
     private final short width;  // number of columns
+    private final Game game;
     private final Cell[][] grid;
     private final ArrayList<Ghost> ghosts;
     private int nbNonWallCells = 0;
-    private byte nbGhosts;
-    //    private
 
-    public Labyrinth() {
+    public Labyrinth(Game game) {
+        this.game = game;
         this.height = (short) (Math.random() * (Labyrinth.MAX - Labyrinth.MIN) + Labyrinth.MIN);
         this.width = (short) (this.height * 0.75); // height to width ratio is 4:3
         this.grid = new Cell[height][width];
         generateGrid();
+        System.out.printf("Labyrinth of game %d: %d x %d\n", Byte.toUnsignedInt(game.getId()), height, width);
         print();
         ghosts = new ArrayList<>();
         createGhosts();
     }
 
     public void createGhosts() {
-        nbGhosts = (byte) (Math.random() * (height * width) / 10);
         int max = (int) (nbNonWallCells * 0.5); // max = 50% of non-wall cells
-        do {
-            nbGhosts = (byte) (Math.random() * max);
-        } while (nbGhosts == 0);
+        int nbGhosts = ((int) (Math.random() * max) + 1) % 256; // 1 to max ghosts
         int row, col;
         for (int i = 0; i < nbGhosts; i++) {
             row = random.nextInt(height);
             col = random.nextInt(width);
             ghosts.add(new Ghost(row, col));
-            grid[row][col].containsGhost = true;
+            grid[row][col].incrNbGhosts();
         }
     }
 
@@ -154,15 +152,23 @@ public class Labyrinth {
     }
 
     public byte getNbGhosts() {
-        return nbGhosts;
+        return (byte) ghosts.size();
     }
 
     public boolean containsGhost(int row, int col) {
-        return grid[row][col].containsGhost;
+        return grid[row][col].nbGhosts > 0;
     }
 
     public boolean containsPlayer(int row, int col) {
-        return grid[row][col].containsPlayer;
+        return grid[row][col].nbPlayers > 0;
+    }
+
+    public void incrNbPlayers(int row, int col) {
+        grid[row][col].incrNbPlayers();
+    }
+
+    public void decrNbPlayers(int row, int col) {
+        grid[row][col].decrNbPlayers();
     }
 
     public boolean isWall(int row, int col) {
@@ -196,9 +202,9 @@ public class Labyrinth {
                     newRow = oldRow + (random.nextBoolean() ? 1 : -1) * distance;
                 }
                 if (isValidPosition(newRow, newCol) && !grid[newRow][newCol].isWall && !grid[newRow][newCol].containsPlayer) {
-                    grid[oldRow][oldCol].containsGhost = false;
+                    grid[oldRow][oldCol].decrNbGhosts();
                     ghost.setPosition(newRow, newCol);
-                    grid[newRow][newCol].containsGhost = true;
+                    grid[newRow][newCol].incrNbGhosts();
                     sendMessageUDP(String.format("GHOST %03d %03d+++", newRow, newCol), ipMulticast, portMulticast);
                     break;
                 }
@@ -206,22 +212,43 @@ public class Labyrinth {
         }
     }
 
-    public int captureGhost(int row, int col) {
-        grid[row][col].containsGhost = false;
+    public void captureGhosts(int row, int col, Player player, InetAddress ipMulticast, int portMulticast) {
         int total = 0;
-        for (Ghost ghost : ghosts) {
+        String mess;
+        Iterator<Ghost> it = ghosts.iterator();
+        while (it.hasNext()) {
+            Ghost ghost = it.next();
             if (ghost.getRow() == row && ghost.getCol() == col) {
-                total += ghost.getScore();
-                ghosts.remove(ghost);
+                it.remove();
+                player.addPoints(ghost.getReward());
+                grid[row][col].decrNbGhosts();
+                mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), player.getScore(), row, col);
+                sendMessageUDP(mess, ipMulticast, portMulticast);
             }
         }
-        return total;
+        if (ghosts.isEmpty()) {
+            this.game.finishGame();
+            this.game.setMaxScore();
+            HashSet<String> winners = this.game.getWinners();
+            for (String winner : winners) {
+                sendMessageUDP(String.format("ENDGA %s %04d+++", winner, this.game.getMaxScore()), ipMulticast, portMulticast);
+            }
+        }
+//        for (Ghost ghost : ghosts) {
+//            if (ghost.getRow() == row && ghost.getCol() == col) {
+//                total += ghost.getScore();
+//                ghosts.remove(ghost);
+//                grid[row][col].decrNbGhosts();
+//            }
+//        }
+//        return total;
     }
 
     static class Cell {
         private final int row, column;
         private boolean isWall;
-        private volatile boolean containsGhost = false;
+        private volatile int nbGhosts = 0;
+        private volatile int nbPlayers = 0;
         private volatile boolean containsPlayer = false;
 
         public Cell(int row, int column, boolean isWall) {
@@ -240,6 +267,30 @@ public class Labyrinth {
 
         public int getColumn() {
             return column;
+        }
+
+        public int getNbGhosts() {
+            return nbGhosts;
+        }
+
+        public synchronized void incrNbGhosts() {
+            nbGhosts++;
+        }
+
+        public synchronized void decrNbGhosts() {
+            nbGhosts--;
+        }
+
+        public int getNbPlayers() {
+            return nbPlayers;
+        }
+
+        public synchronized void incrNbPlayers() {
+            nbPlayers++;
+        }
+
+        public synchronized void decrNbPlayers() {
+            nbPlayers--;
         }
 
         @Override

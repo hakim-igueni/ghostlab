@@ -105,14 +105,10 @@ public class Player {
         dest.printf("GPLYR %s %04d %04d %04d***", id, row, col, score);
     }
 
-    public boolean unsubscribe() {
+    public boolean unregister() {
         if (this.game != null) {
             this.game.removePlayer(this);
-            // remove the game if it has no players left
-            if (this.game.getNbPlayers() == 0) {
-                ServerImpl.INSTANCE.removeGame(this.game);
-                System.out.printf("Game %s removed.\n", this.game.getId());
-            }
+            ServerImpl.INSTANCE.removePlayer(id);
             this.game = null;
             this.hasSentSTART = false;
             this.id = null;
@@ -126,8 +122,8 @@ public class Player {
         return this.score;
     }
 
-    public void setScore(int newScore) {
-        this.score = newScore;
+    public void addPoints(int points) {
+        this.score += points;
     }
 
     public void setPosition(int row, int col) {
@@ -145,6 +141,22 @@ public class Player {
 
     public InetAddress getAddress() {
         return address;
+    }
+
+    public boolean moveUP(int d) throws Exception {
+        return game.getGameManager().movePlayerUP(this, d);
+    }
+
+    public boolean moveDOWN(int d) throws Exception {
+        return game.getGameManager().movePlayerDOWN(this, d);
+    }
+
+    public boolean moveLEFT(int d) throws Exception {
+        return game.getGameManager().movePlayerLEFT(this, d);
+    }
+
+    public boolean moveRIGHT(int d) throws Exception {
+        return game.getGameManager().movePlayerRIGHT(this, d);
     }
 }
 

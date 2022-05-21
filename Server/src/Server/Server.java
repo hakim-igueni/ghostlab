@@ -15,8 +15,6 @@ public class Server {
                 PlayerHandler playerHandler = new PlayerHandler(socket);
                 Thread t = new Thread(playerHandler);
                 t.start();
-                // todo: kill the thread when the player disconnects
-                // todo: (optional: add an array of threads)
             }
         } catch (Exception e) {
             e.printStackTrace();
