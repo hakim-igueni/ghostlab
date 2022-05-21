@@ -215,7 +215,7 @@ public class Labyrinth implements Runnable {
                 }
             }
             try {
-                Thread.sleep(2000); // sleep 2 seconds
+                Thread.sleep(10000); // sleep 2 seconds
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -226,7 +226,6 @@ public class Labyrinth implements Runnable {
     public void run() {
         while (this.game.isRunning()) {
             moveGhosts(this.game.getIpMulticast(), this.game.getPortMulticast());
-            System.out.println("isRunning: " + this.game.isRunning());
         }
     }
 
