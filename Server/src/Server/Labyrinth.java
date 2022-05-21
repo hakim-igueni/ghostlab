@@ -205,12 +205,14 @@ public class Labyrinth implements Runnable {
                     grid[oldRow][oldCol].decrNbGhosts();
                     ghost.setPosition(newRow, newCol);
                     grid[newRow][newCol].incrNbGhosts();
-                    sendMessageUDP(String.format("GHOST %03d %03d+++", newRow, newCol), ipMulticast, portMulticast);
+                    String m = String.format("GHOST %03d %03d+++", newRow, newCol);
+                    sendMessageUDP(m, ipMulticast, portMulticast);
+                    System.out.println(m);
                     break;
                 }
             }
             try {
-                Thread.sleep(1000); // sleep 5 seconds
+                Thread.sleep(2000); // sleep 2 seconds
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -235,14 +237,18 @@ public class Labyrinth implements Runnable {
                 grid[row][col].decrNbGhosts();
                 mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), player.getScore(), row, col);
                 sendMessageUDP(mess, ipMulticast, portMulticast);
+                System.out.println(mess);
             }
         }
         if (ghosts.isEmpty()) {
             this.game.finishGame();
             this.game.setMaxScore();
             HashSet<String> winners = this.game.getWinners();
+            String m;
             for (String winner : winners) {
-                sendMessageUDP(String.format("ENDGA %s %04d+++", winner, this.game.getMaxScore()), ipMulticast, portMulticast);
+                m = String.format("ENDGA %s %04d+++", winner, this.game.getMaxScore());
+                sendMessageUDP(m, ipMulticast, portMulticast);
+                System.out.println(m);
             }
         }
 //        for (Ghost ghost : ghosts) {
