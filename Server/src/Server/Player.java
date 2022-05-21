@@ -122,8 +122,8 @@ public class Player {
         return this.score;
     }
 
-    public void setScore(int newScore) {
-        this.score = newScore;
+    public void addPoints(int points) {
+        this.score += points;
     }
 
     public void setPosition(int row, int col) {

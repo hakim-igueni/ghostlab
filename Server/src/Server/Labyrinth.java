@@ -10,7 +10,7 @@ import static Server.Utils.sendMessageUDP;
  * <a href="https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>
  */
 public class Labyrinth {
-    public static final int MAX = 999; // todo: add max easy, medium, hard
+    public static final int MAX = 150; // todo: add max easy, medium, hard
     public static final int MIN = 12;
     private static final int[][] DIRECTIONS = { // distance of 2 to each side
             {0, -2}, // north
@@ -33,17 +33,15 @@ public class Labyrinth {
         this.width = (short) (this.height * 0.75); // height to width ratio is 4:3
         this.grid = new Cell[height][width];
         generateGrid();
+        System.out.printf("Labyrinth of game %d: %d x %d\n", Byte.toUnsignedInt(game.getId()), height, width);
         print();
         ghosts = new ArrayList<>();
         createGhosts();
     }
 
     public void createGhosts() {
-        int nbGhosts = (byte) (Math.random() * (height * width) / 10);
         int max = (int) (nbNonWallCells * 0.5); // max = 50% of non-wall cells
-        do {
-            nbGhosts = (byte) (Math.random() * max);
-        } while (nbGhosts == 0);
+        int nbGhosts = ((int) (Math.random() * max) + 1) % 256; // 1 to max ghosts
         int row, col;
         for (int i = 0; i < nbGhosts; i++) {
             row = random.nextInt(height);
@@ -214,15 +212,18 @@ public class Labyrinth {
         }
     }
 
-    public int captureGhosts(int row, int col, InetAddress ipMulticast, int portMulticast) {
+    public void captureGhosts(int row, int col, Player player, InetAddress ipMulticast, int portMulticast) {
         int total = 0;
+        String mess;
         Iterator<Ghost> it = ghosts.iterator();
         while (it.hasNext()) {
             Ghost ghost = it.next();
             if (ghost.getRow() == row && ghost.getCol() == col) {
                 it.remove();
-                total += ghost.getReward();
+                player.addPoints(ghost.getReward());
                 grid[row][col].decrNbGhosts();
+                mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), player.getScore(), row, col);
+                sendMessageUDP(mess, ipMulticast, portMulticast);
             }
         }
         if (ghosts.isEmpty()) {
@@ -230,7 +231,7 @@ public class Labyrinth {
             this.game.setMaxScore();
             HashSet<String> winners = this.game.getWinners();
             for (String winner : winners) {
-                sendMessageUDP(String.format("ENDGA %s %04d", winner, this.game.getMaxScore()), ipMulticast, portMulticast);
+                sendMessageUDP(String.format("ENDGA %s %04d+++", winner, this.game.getMaxScore()), ipMulticast, portMulticast);
             }
         }
 //        for (Ghost ghost : ghosts) {
@@ -240,7 +241,7 @@ public class Labyrinth {
 //                grid[row][col].decrNbGhosts();
 //            }
 //        }
-        return total;
+//        return total;
     }
 
     static class Cell {

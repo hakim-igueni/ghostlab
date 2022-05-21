@@ -128,7 +128,9 @@ public class PlayerHandler implements Runnable {
             game.addPlayer(this.player);
             System.out.printf("[Req-NEWPL] Player %s requested to create a new game\n", this.player.getId());
             this.player.setGame(game);
-            ServerImpl.INSTANCE.addNotStartedGame(game);
+            if (!ServerImpl.INSTANCE.addNotStartedGame(game)) {
+                throw new Exception("No more games can be created");
+            }
             ServerImpl.INSTANCE.addPlayer(this.player.getId());
 
             // send REGOK m***
@@ -175,7 +177,9 @@ public class PlayerHandler implements Runnable {
                 throw new Exception("ID is already used");
             }
             ServerImpl.INSTANCE.addPlayer(this.player.getId());
-            ServerImpl.INSTANCE.addPlayerToGame(this.player, m);
+            if (!ServerImpl.INSTANCE.addPlayerToGame(this.player, m)) {
+                throw new Exception("Game is full");
+            }
             this.player.setGame(ServerImpl.INSTANCE.getGame(m));
 
             // send REGOK m***
@@ -282,7 +286,7 @@ public class PlayerHandler implements Runnable {
             System.out.printf("[Ans-GAMES] List of not started games sent to player %s\n", this.player.getId());
             ServerImpl.INSTANCE.forEachNotStartedGame(g -> {
                 g.sendOGAME(this.out);
-                System.out.printf("[Ans-GAMES] OGAME %d %d\n", g.getId(), g.getNbPlayers());
+                System.out.printf("[Ans-GAMES] OGAME %d %d\n", Byte.toUnsignedInt(g.getId()), g.getNbPlayers());
             });
             System.out.println();
         } catch (Exception e) {

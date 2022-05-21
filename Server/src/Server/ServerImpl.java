@@ -6,6 +6,8 @@ import java.util.function.Consumer;
 
 public class ServerImpl {
     // The server's state.
+    public static final int MAX_GAMES = 256; // Maximum number of games
+    public static final int MAX_PLAYERS = 256; // Maximum number of players per game
     public static final ServerImpl INSTANCE = new ServerImpl();
     private final HashSet<String> connectedPlayers = new HashSet<>();
     private final HashMap<Byte, Game> notStartedGames = new HashMap<>();
@@ -26,11 +28,18 @@ public class ServerImpl {
         return connectedPlayers.contains(playerName);
     }
 
-    public synchronized void addPlayerToGame(Player player, byte gameId) {
+    public synchronized boolean addPlayerToGame(Player player, byte gameId) {
         Game game = notStartedGames.get(gameId);
         if (game != null) {
-            game.addPlayer(player);
+            if (game.getNbPlayers() < ServerImpl.MAX_PLAYERS) {
+                game.addPlayer(player);
+            } else {
+                System.out.println("Too many players!!!!!!!!!!!!!");
+                return false;
+//                throw new RuntimeException("Too many players"); // TODO: treat this properly
+            }
         }
+        return true;
     }
 
     public synchronized void startGame(Game game) {
@@ -38,14 +47,16 @@ public class ServerImpl {
         startedGames.put(game.getId(), game);
     }
 
-    public synchronized void addNotStartedGame(Game game) {
+    public synchronized boolean addNotStartedGame(Game game) {
 //        if (notStartedGames.size() < 42) {
-        if (notStartedGames.size() <= Game.MAX_GAMES) {
+        if (notStartedGames.size() <= ServerImpl.MAX_GAMES) {
             notStartedGames.put(game.getId(), game);
         } else {
             System.out.println("Too many games!!!!!!!!!!!!!");
-            throw new RuntimeException("Too many games"); // TODO: treat this properly
+            return false;
+//            throw new RuntimeException("Too many games"); // TODO: treat this properly
         }
+        return true;
     }
 
     public void removeGame(Game game) {
@@ -55,7 +66,7 @@ public class ServerImpl {
             notStartedGames.remove(game.getId());
         }
         Game.addAvailableGameId(game.getId());
-        System.out.printf("Game %s removed.\n", game.getId());
+        System.out.printf("Game %d removed.\n", Byte.toUnsignedInt(game.getId()));
     }
 
     public Game getGame(byte id) {

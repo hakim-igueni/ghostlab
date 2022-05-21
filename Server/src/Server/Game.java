@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class Game {
-    public static final int MAX_GAMES = 256; // Maximum number of games
     private static final HashSet<Byte> availableGameIds = new HashSet<>();
 
     // this HashSet is used to store the available game ids and reuse them when a game is over

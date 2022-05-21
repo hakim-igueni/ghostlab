@@ -1,7 +1,7 @@
 package Server;
 
 public class Ghost {
-    private final int speed = (int) (Math.random() * 10);
+    private final int speed = (int) (Math.random() * 9) + 1;
     private final int reward = speed * 2;
     private int row;
     private int col;
