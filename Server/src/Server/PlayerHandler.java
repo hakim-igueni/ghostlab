@@ -11,8 +11,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-import static Server.Utils.readRequest;
-import static Server.Utils.sendMessageUDP;
+import static Server.Utils.*;
 
 public class PlayerHandler implements Runnable {
     private final HashMap<String, Consumer<String[]>> beforeGameSTARTCommands = new HashMap<>();
@@ -35,7 +34,6 @@ public class PlayerHandler implements Runnable {
         beforeGameSTARTCommands.put("LIST?", this::treatLISTRequest);
         beforeGameSTARTCommands.put("START", this::treatSTARTRequest);
 
-        // todo: Si le joueur envoie un de ces messages alors que la partie est finie, la partie lui répond [GOBYE***] et ferme la connexion.
         afterGameSTARTCommands.put("UPMOV", this::treatUPMOVRequest);
         afterGameSTARTCommands.put("DOMOV", this::treatDOMOVRequest);
         afterGameSTARTCommands.put("LEMOV", this::treatLEMOVRequest);
@@ -46,9 +44,27 @@ public class PlayerHandler implements Runnable {
         afterGameSTARTCommands.put("SEND!", this::treatSENDRequest);
     }
 
-
     private void sendDUNNO() {
         this.out.printf("DUNNO***");
+    }
+
+    private void sendREGNO() {
+        this.out.printf("REGNO***");
+    }
+
+    private void sendGOBYE() {
+        this.out.printf("GOBYE***");
+    }
+
+    public void exit() {
+        System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
+        boolean b = this.player.unregister();
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.player.finishPlaying();
     }
 
     @Override
@@ -63,11 +79,10 @@ public class PlayerHandler implements Runnable {
         while (!this.player.hasSentSTART()) { // while the player is still connected and didn't send START
             request = readRequest(this.in);
             if (request == null) { // the client is disconnected
-                System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
-                this.player.unsubscribe();
+                exit();
                 return; // exit the thread
             }
-            args = request.split(" "); // TODO: check if the method split does exactly what we want
+            args = request.split(" ");
             beforeGameSTARTCommands.getOrDefault(args[0], (a -> sendDUNNO())).accept(args);
         }
 
@@ -75,32 +90,17 @@ public class PlayerHandler implements Runnable {
         while (!this.player.hasFinishedPlaying()) { // while the player is still playing and the game is not finished
             request = readRequest(this.in);
             if (request == null) { // the client is disconnected
-                System.out.printf("[Server] Player %s disconnected\n\n", this.player.getId());
-                this.player.unsubscribe();
+                exit();
                 return; // exit the thread
             }
             args = request.split(" ");
+            if (this.player.getGame().isFinished()) {
+                sendGOBYE();
+                exit();
+                return; // exit the thread
+            }
             afterGameSTARTCommands.getOrDefault(args[0], (a -> sendDUNNO())).accept(args);
         }
-    }
-
-    public boolean isInvalidId(String id) { // todo: add this method to Utils
-        return !id.matches("^[\\da-zA-Z ]{8}$");
-    }
-
-    public boolean isInvalidPort(String port) {
-        return !port.matches("\\d{4}");
-    }
-
-    public boolean isInvalidd(String d) {
-        return !d.matches("\\d{3}");
-    }
-
-    public boolean isInvalidmess(String mess) {
-        if (mess.length() > 200) {
-            return false;
-        }
-        return !mess.contains("+++");
     }
 
     private void treatNEWPLRequest(String[] args) {
@@ -129,13 +129,14 @@ public class PlayerHandler implements Runnable {
             System.out.printf("[Req-NEWPL] Player %s requested to create a new game\n", this.player.getId());
             this.player.setGame(game);
             ServerImpl.INSTANCE.addNotStartedGame(game);
+            ServerImpl.INSTANCE.addPlayer(this.player.getId());
 
             // send REGOK m***
             this.out.printf("REGOK %c***", game.getId());
             System.out.printf("[Ans-NEWPL] Player %s successfully created a new game and joined it\n\n", this.player.getId());
         } catch (Exception e) {
             System.out.printf("[Req-NEWPL] Error: %s\n\n", e.getMessage());
-            sendDUNNO();
+            sendREGNO();
         }
     }
 
@@ -157,6 +158,9 @@ public class PlayerHandler implements Runnable {
                 return;
             }
             String id = args[1]; // TODO: check if the id is already used, if so, send an error REGNO
+            if (ServerImpl.INSTANCE.isPlayerConnected(id)) {
+                throw new Exception("ID is already used");
+            }
             int port = Integer.parseInt(args[2]);
             this.player.setId(id);
             this.player.setPort(port);
@@ -167,6 +171,10 @@ public class PlayerHandler implements Runnable {
                 this.out.printf("REGNO***");
                 return;
             }
+            if (ServerImpl.INSTANCE.isPlayerConnected(id)) {
+                throw new Exception("ID is already used");
+            }
+            ServerImpl.INSTANCE.addPlayer(this.player.getId());
             ServerImpl.INSTANCE.addPlayerToGame(this.player, m);
             this.player.setGame(ServerImpl.INSTANCE.getGame(m));
 
@@ -175,7 +183,7 @@ public class PlayerHandler implements Runnable {
             System.out.printf("[Ans-REGIS] Player %s joined game %d\n\n", id, m);
         } catch (Exception e) {
             System.out.printf("[Req-REGIS] Error: %s\n\n", e.getMessage());
-            sendDUNNO();
+            sendREGNO();
         }
     }
 
@@ -187,7 +195,7 @@ public class PlayerHandler implements Runnable {
                 throw new Exception("UNREG request must have 0 arguments");
             }
             byte m = this.player.getGame().getId();
-            if (!this.player.unsubscribe()) {
+            if (!this.player.unregister()) {
                 sendDUNNO();
                 return;
             }
@@ -311,41 +319,14 @@ public class PlayerHandler implements Runnable {
                 throw new Exception("UPMOV request must have 1 argument: UPMOV d");
             }
             if (isInvalidd(args[1])) {
-                throw new Exception("d must have 3 characters");
+                throw new Exception("d must have 3 digits");
             }
             int d = Integer.parseInt(args[1]);
-
-            //get position of the player
-            int y = this.player.getCol();
-            int x = this.player.getRow();
-
-            int newX = x - d;
-
-            if (newX < 0) {
-                throw new Exception("The distance" + newX + "can not be traversed");
+            if (this.player.moveUP(d)) { // move the player and check if there was a ghost captured
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
+            } else {
+                this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
-            int newScore = this.player.getScore();
-            int port = this.player.getGame().getGameManager().getPortMulticast();
-            InetAddress address = this.player.getGame().getGameManager().getIpMulticast();
-            String mess = null;
-            for (int i = x; i >= newX; i--) {
-                if (this.player.getGame().getLabyrinth().isWall(i, y)) {
-                    newX = i + 1;
-                    break;
-                }
-                if (this.player.getGame().getLabyrinth().containsGhost(i, y)) {
-                    newScore += this.player.getGame().getLabyrinth().captureGhost(i, y);
-                    mess = String.format("SCORE %s %04d %03d %03d+++", this.player.getId(), newScore, i, y);
-                    sendMessageUDP(mess, address, port);
-                    this.out.printf("MOVEF %03d %03d %04d***", x, y, newScore);
-                }
-            }
-            this.player.setScore(newScore);
-            this.player.setRow(newX);
-            if (mess == null) { // if there is no ghost captured
-                this.out.printf("MOVE! %03d %03d***", newX, y);
-            }
-
         } catch (Exception e) {
             System.out.printf("[Req-UPMOV] Error: %s\n", e.getMessage());
             sendDUNNO();
@@ -357,42 +338,20 @@ public class PlayerHandler implements Runnable {
         try {
             // Verify if the request has one argument
             if (args.length != 2) {
-                throw new Exception("UPMOV request must have 1 argument: UPMOV d");
+                throw new Exception("DOMOV request must have 1 argument: DOMOV d");
             }
             if (isInvalidd(args[1])) {
-                throw new Exception("d must have 3 characters");
+                throw new Exception("d must have 3 digits");
             }
             int d = Integer.parseInt(args[1]);
-
-            //get position of the player
-            int y = this.player.getCol();
-            int x = this.player.getRow();
-
-            int newX = x + d;
-            for (int i = x; i <= newX; i++) {
-                if (this.player.getGame().getLabyrinth().isWall(i, y)) {
-                    newX = i - 1;
-                    break;
-                }
-            }
-            int score = this.player.getScore();
-            for (int i = x; i <= newX; i++) {
-                int p = 0;
-                if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
-                    p = score + 1;
-                    break;
-                }
-                this.out.printf("MOVEF! %03d %03d***", x, y, p);
-            }
-
-            if (newX >= this.player.getGame().getLabyrinthHeight()) {
-                throw new Exception("The distance" + newX + "can not be traversed");
+            if (this.player.moveDOWN(d)) { // move the player and check if there was a ghost captured
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
             } else {
-                this.player.setRow(newX);
-                this.out.printf("MOVE! %03d %03d***", x, y);
+                this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-DOMOV] Error: %s\n", e.getMessage());
+            sendDUNNO();
         }
     }
 
@@ -404,39 +363,18 @@ public class PlayerHandler implements Runnable {
                 throw new Exception("RIMOV request must have 1 argument: RIMOV d");
             }
             if (isInvalidd(args[1])) {
-                throw new Exception("d must have 3 characters");
+                throw new Exception("d must have 3 digits");
             }
             int d = Integer.parseInt(args[1]);
 
-            //get position of the player
-            int y = this.player.getCol();
-            int x = this.player.getRow();
-
-            int newy = y + d;
-            if (newy >= this.player.getGame().getLabyrinthWidth()) {
-                throw new Exception("The distance" + newy + "can not be traversed");
+            if (this.player.moveRIGHT(d)) { // move the player and check if there was a ghost captured
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
             } else {
-                for (int i = y; i <= newy; i++) {
-                    if (this.player.getGame().getLabyrinth().isWall(x, i)) {
-                        newy = i - 1;
-                        break;
-                    }
-                }
-                int score = this.player.getScore();
-                for (int i = x; i <= newy; i++) {
-                    int p = 0;
-                    if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
-                        p = score + 1;
-                        break;
-                    }
-                    this.out.printf("MOVEF! %03d %03d***", x, y, p);
-                }
-                this.player.setRow(newy);
-                this.out.printf("MOVE! %03d %03d***", x, y);
-
+                this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-RIMOV] Error: %s\n", e.getMessage());
+            sendDUNNO();
         }
     }
 
@@ -448,39 +386,17 @@ public class PlayerHandler implements Runnable {
                 throw new Exception("LEMOV request must have 1 argument: LEMOV d");
             }
             if (isInvalidd(args[1])) {
-                throw new Exception("d must have 3 characters");
+                throw new Exception("d must have 3 digits");
             }
             int d = Integer.parseInt(args[1]);
-
-            //get position of the player
-            int y = this.player.getCol();
-            int x = this.player.getRow();
-
-            int newy = y - d;
-            if (newy < 0) {
-                throw new Exception("The distance" + newy + "can not be traversed");
+            if (this.player.moveLEFT(d)) { // move the player and check if there was a ghost captured
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
             } else {
-                for (int i = y; i >= newy; i--) {
-                    if (this.player.getGame().getLabyrinth().isWall(x, i)) {
-                        newy = i + 1;
-                        break;
-                    }
-                }
-                int score = this.player.getScore();
-                for (int i = x; i >= newy; i++) {
-                    int p = 0;
-                    if (x == this.player.getGhost().getRow() && y == this.player.getGhost().getCol()) {
-                        p = score + 1;
-                        break;
-                    }
-                    this.out.printf("MOVEF! %03d %03d***", x, y, p);
-                }
-                this.player.setRow(newy);
-                this.out.printf("MOVE! %03d %03d***", x, y);
-
+                this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.out.printf("[Req-LEMOV] Error: %s\n", e.getMessage());
+            sendDUNNO();
         }
     }
 
@@ -522,14 +438,13 @@ public class PlayerHandler implements Runnable {
             if (g == null) {
                 throw new Exception("Player is not in a game");
             }
-            this.player.unsubscribe();
+            this.player.unregister();
 
             // send GOBYE***
-            this.out.printf("GOBYE***");
+            sendGOBYE();
             // close the connection
-            this.socket.close();
-            this.player.finishPlaying();
             System.out.printf("[Ans-IQUIT] Player %s left the game %d\n", this.player.getId(), g.getId());
+            exit();
         } catch (Exception e) {
             System.out.printf("[Req-IQUIT] Error: %s\n\n", e.getMessage());
             sendDUNNO();

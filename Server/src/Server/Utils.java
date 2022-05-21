@@ -49,4 +49,23 @@ public class Utils {
             e.printStackTrace();
         }
     }
+
+    public static boolean isInvalidId(String id) {
+        return !id.matches("^[\\da-zA-Z ]{8}$");
+    }
+
+    public static boolean isInvalidPort(String port) {
+        return !port.matches("\\d{4}");
+    }
+
+    public static boolean isInvalidd(String d) {
+        return !d.matches("\\d{3}");
+    }
+
+    public static boolean isInvalidmess(String mess) {
+        if (mess.length() > 200) {
+            return false;
+        }
+        return !mess.contains("+++");
+    }
 }

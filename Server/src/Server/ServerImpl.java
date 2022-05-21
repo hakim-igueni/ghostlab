@@ -1,18 +1,31 @@
 package Server;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class ServerImpl {
     // The server's state.
     public static final ServerImpl INSTANCE = new ServerImpl();
-    //    private final HashMap<String, Player> connectedPlayers = new HashMap<>();
+    private final HashSet<String> connectedPlayers = new HashSet<>();
     private final HashMap<Byte, Game> notStartedGames = new HashMap<>();
     private final HashMap<Byte, Game> startedGames = new HashMap<>();
 
     private ServerImpl() {
     }
-    
+
+    public void addPlayer(String playerName) {
+        connectedPlayers.add(playerName);
+    }
+
+    public void removePlayer(String playerName) {
+        connectedPlayers.remove(playerName);
+    }
+
+    public boolean isPlayerConnected(String playerName) {
+        return connectedPlayers.contains(playerName);
+    }
+
     public synchronized void addPlayerToGame(Player player, byte gameId) {
         Game game = notStartedGames.get(gameId);
         if (game != null) {
@@ -42,6 +55,7 @@ public class ServerImpl {
             notStartedGames.remove(game.getId());
         }
         Game.addAvailableGameId(game.getId());
+        System.out.printf("Game %s removed.\n", game.getId());
     }
 
     public Game getGame(byte id) {

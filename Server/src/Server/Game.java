@@ -20,13 +20,14 @@ public class Game {
     private final HashMap<String, Player> playersWhoDidntSendSTART = new HashMap<>();
     private final Labyrinth labyrinth;
     private final byte id;
-    private boolean started = false;
+    private boolean started = false; // todo: does it need to be volatile?
+    private volatile boolean finished = false; // todo: does it need to be volatile?
     private GameManager gameManager;
-
+    private int maxScore = 0;
 
     public Game() {
         this.id = Game.nextAvailableGameId();
-        labyrinth = new Labyrinth();
+        labyrinth = new Labyrinth(this);
     }
 
     public synchronized static byte nextAvailableGameId() {
@@ -40,6 +41,10 @@ public class Game {
 
     public synchronized static void addAvailableGameId(byte id) {
         availableGameIds.add(id);
+    }
+
+    public int getMaxScore() {
+        return maxScore;
     }
 
     public GameManager getGameManager() {
@@ -58,6 +63,26 @@ public class Game {
         return started;
     }
 
+    public void setMaxScore() {
+        int maxScore = 0;
+        for (Player player : players.values()) {
+            if (player.getScore() > maxScore) {
+                maxScore = player.getScore();
+            }
+        }
+        this.maxScore = maxScore;
+    }
+
+    public HashSet<String> getWinners() {
+        // get winners
+        HashSet<String> winners = new HashSet<>();
+        for (Player player : players.values()) {
+            if (player.getScore() == maxScore) {
+                winners.add(player.getId());
+            }
+        }
+        return winners;
+    }
 
     public synchronized void removeFromPlayersWhoDidntSendSTART(Player player) {
         playersWhoDidntSendSTART.remove(player.getId());
@@ -96,6 +121,11 @@ public class Game {
         if (player.hasSentSTART()) {
             playersWhoDidntSendSTART.remove(player.getId());
         }
+        // remove the game if it has no players left
+        if (getNbPlayers() == 0) {
+            ServerImpl.INSTANCE.removeGame(this);
+            finished = true;
+        }
     }
 
     public void addPlayer(Player player) {
@@ -117,4 +147,16 @@ public class Game {
         return players.get(id);
     }
 
+    public boolean isRunning() {
+        return !finished;
+    }
+
+    public void finishGame() {
+        finished = true;
+        ServerImpl.INSTANCE.removeGame(this);
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
 }

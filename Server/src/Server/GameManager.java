@@ -3,6 +3,8 @@ package Server;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import static Server.Utils.sendMessageUDP;
+
 public class GameManager implements Runnable {
     // TODO: avoid multicast addresses that start with 224, 232, 233 et 239
     // TODO: make sure that a multicast address is a class D address (first byte is between 224 and 239)
@@ -92,12 +94,140 @@ public class GameManager implements Runnable {
         sendWELCOtoAllPlayers();
         // send [POSIT x y] to all players
         sendPOSITtoAllPlayers();
-        moveGhosts();
-
-
+        while (this.game.isRunning()) {
+            moveGhosts();
+            try {
+                Thread.sleep(5000); // sleep 5 seconds
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.printf("Game %d ended\n", game.getId());
     }
 
     private void moveGhosts() {
         game.getLabyrinth().moveGhosts(this.ipMulticast, this.portMulticast);
+    }
+
+    public boolean movePlayerUP(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newX = x - d;
+        if (newX < 0) {
+            throw new Exception("The distance d=" + d + " can not be traversed");
+        }
+        int newScore = player.getScore();
+        String mess = null;
+        for (int i = x; i >= newX; i--) {
+            if (game.getLabyrinth().isWall(i, y)) {
+                newX = i + 1;
+                break;
+            }
+            if (game.getLabyrinth().containsGhost(i, y)) {
+                newScore += game.getLabyrinth().captureGhosts(i, y, ipMulticast, portMulticast);
+                mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), newScore, i, y);
+                sendMessageUDP(mess, ipMulticast, portMulticast);
+            }
+        }
+        game.getLabyrinth().decrNbPlayers(x, y);
+        game.getLabyrinth().incrNbPlayers(newX, y);
+        player.setScore(newScore);
+        player.setRow(newX);
+        return mess != null; // return true if a message has been sent i.e. a ghost has been captured
+    }
+
+    public boolean movePlayerDOWN(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newX = x + d;
+        if (newX >= game.getLabyrinthHeight()) {
+            throw new Exception("The distance" + d + "can not be traversed");
+        }
+        int newScore = player.getScore();
+        int portMulticast = game.getGameManager().getPortMulticast();
+        InetAddress ipMulticast = game.getGameManager().getIpMulticast();
+        String mess = null;
+        for (int i = x; i <= newX; i++) {
+            if (game.getLabyrinth().isWall(i, y)) {
+                newX = i - 1;
+                break;
+            }
+            if (game.getLabyrinth().containsGhost(i, y)) {
+                newScore += game.getLabyrinth().captureGhosts(i, y, ipMulticast, portMulticast);
+                mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), newScore, i, y);
+                sendMessageUDP(mess, ipMulticast, portMulticast);
+            }
+        }
+        game.getLabyrinth().decrNbPlayers(x, y);
+        game.getLabyrinth().incrNbPlayers(newX, y);
+        player.setScore(newScore);
+        player.setRow(newX);
+        return mess != null; // return true if a message has been sent i.e. a ghost has been captured
+    }
+
+    public boolean movePlayerLEFT(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newY = y - d;
+        if (newY < 0) {
+            throw new Exception("The distance" + d + "can not be traversed");
+        }
+        int newScore = player.getScore();
+        int portMulticast = game.getGameManager().getPortMulticast();
+        InetAddress ipMulticast = game.getGameManager().getIpMulticast();
+        String mess = null;
+        for (int i = y; i >= newY; i--) {
+            if (game.getLabyrinth().isWall(x, i)) {
+                newY = i + 1;
+                break;
+            }
+            if (game.getLabyrinth().containsGhost(x, i)) {
+                newScore += game.getLabyrinth().captureGhosts(x, i, ipMulticast, portMulticast);
+                mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), newScore, x, i);
+                sendMessageUDP(mess, ipMulticast, portMulticast);
+            }
+        }
+        game.getLabyrinth().decrNbPlayers(x, y);
+        game.getLabyrinth().incrNbPlayers(x, newY);
+        player.setScore(newScore);
+        player.setCol(newY);
+        return mess != null; // return true if a message has been sent i.e. a ghost has been captured
+    }
+
+    public boolean movePlayerRIGHT(Player player, int d) throws Exception {
+        //get position of the player
+        int x = player.getRow();
+        int y = player.getCol();
+
+        int newY = y + d;
+        if (newY >= game.getLabyrinthWidth()) {
+            throw new Exception("The distance" + d + "can not be traversed");
+        }
+        int newScore = player.getScore();
+        int portMulticast = game.getGameManager().getPortMulticast();
+        InetAddress ipMulticast = game.getGameManager().getIpMulticast();
+        String mess = null;
+        for (int i = y; i <= newY; i++) {
+            if (game.getLabyrinth().isWall(x, i)) {
+                newY = i - 1;
+                break;
+            }
+            if (game.getLabyrinth().containsGhost(x, i)) {
+                newScore += game.getLabyrinth().captureGhosts(x, i, ipMulticast, portMulticast);
+                mess = String.format("SCORE %s %04d %03d %03d+++", player.getId(), newScore, x, i);
+                sendMessageUDP(mess, ipMulticast, portMulticast);
+            }
+        }
+        game.getLabyrinth().decrNbPlayers(x, y);
+        game.getLabyrinth().incrNbPlayers(x, newY);
+        player.setScore(newScore);
+        player.setCol(newY);
+        return mess != null; // return true if a message has been sent i.e. a ghost has been captured
     }
 }
