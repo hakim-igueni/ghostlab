@@ -86,9 +86,11 @@ public class Player {
         w1 = (byte) (w >> 8); // strongest weight byte
         String ipMulticastStr = ipMulticast.getHostAddress();
         String ip = ipMulticastStr + "#".repeat(15 - ipMulticastStr.length());
-        this.out.printf("WELCO %c %c%c %c%c %c %s %04d***", Byte.toUnsignedInt(m), Byte.toUnsignedInt(h0),
+        String mess = String.format("WELCO %c %c%c %c%c %c %s %04d***", Byte.toUnsignedInt(m), Byte.toUnsignedInt(h0),
                 Byte.toUnsignedInt(h1), Byte.toUnsignedInt(w0), Byte.toUnsignedInt(w1), Byte.toUnsignedInt(f), ip,
                 portMulticast);
+        this.out.printf(mess);
+        System.out.println(mess);
     }
 
     public void sendPOSIT() {
