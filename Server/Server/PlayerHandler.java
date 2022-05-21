@@ -64,11 +64,14 @@ public class PlayerHandler implements Runnable {
             e.printStackTrace();
         }
         this.player.finishPlaying();
+        if (this.player.getGame() != null) {
+            this.player.getGame().removePlayer(this.player);
+        }
     }
 
     @Override
     public void run() {
-        String[] args = {"GAME?"};
+        String[] args = { "GAME?" };
         String request;
 
         // send GAMES n
@@ -134,7 +137,8 @@ public class PlayerHandler implements Runnable {
 
             // send REGOK m***
             this.out.printf("REGOK %c***", game.getId());
-            System.out.printf("[Ans-NEWPL] Player %s successfully created a new game and joined it\n\n", this.player.getId());
+            System.out.printf("[Ans-NEWPL] Player %s successfully created a new game and joined it\n\n",
+                    this.player.getId());
         } catch (Exception e) {
             System.out.printf("[Req-NEWPL] Error: %s\n\n", e.getMessage());
             sendREGNO();
@@ -197,7 +201,8 @@ public class PlayerHandler implements Runnable {
         // UNREG***
         try {
             System.out.printf("[Req-UNREG] Player %s requested to unregister\n", this.player.getId());
-            if (args.length != 1) { // TODO: see what happens when the player sends [UNREG ***] (a space after UNREG)
+            if (args.length != 1) { // TODO: see what happens when the player sends [UNREG ***] (a space after
+                                    // UNREG)
                 throw new Exception("UNREG request must have 0 arguments");
             }
             byte m = this.player.getGame().getId();
@@ -214,7 +219,6 @@ public class PlayerHandler implements Runnable {
             sendDUNNO();
         }
     }
-
 
     private void treatSIZERequest(String[] args) {
         // SIZE? m***
@@ -238,7 +242,8 @@ public class PlayerHandler implements Runnable {
             w0 = (byte) w; // lowest weight byte
             w1 = (byte) (w >> 8); // strongest weight byte
             this.out.printf("SIZE! %c %c%c %c%c***", m, h0, h1, w0, w1); // send SIZE! m h w***
-            System.out.printf("[Ans-SIZE?] Labyrinth size: (w=%d, h=%d) of game %d sent to player %s\n\n", w, h, m, this.player.getId());
+            System.out.printf("[Ans-SIZE?] Labyrinth size: (w=%d, h=%d) of game %d sent to player %s\n\n", w, h, m,
+                    this.player.getId());
         } catch (Exception e) {
             System.out.printf("[Req-SIZE?] Error: %s\n\n", e.getMessage());
             sendDUNNO();
@@ -251,7 +256,7 @@ public class PlayerHandler implements Runnable {
             if (args.length != 2) {
                 throw new Exception("LIST? request must have 1 argument: LIST? m");
             }
-            //check if the game exists
+            // check if the game exists
             byte m = args[1].getBytes()[0]; // TODO: check if args[1] is a single byte
             System.out.printf("[Req-LIST?] Player %s requested list of players of game %d\n", this.player.getId(), m);
             Game g = ServerImpl.INSTANCE.getGame(m);
@@ -308,7 +313,8 @@ public class PlayerHandler implements Runnable {
             if (g == null) {
                 throw new Exception("Player is not in a game");
             }
-            System.out.printf("[Ans-START] Player %s is waiting for game %d to start\n", this.player.getId(), g.getId());
+            System.out.printf("[Ans-START] Player %s is waiting for game %d to start\n", this.player.getId(),
+                    g.getId());
             this.player.pressSTART();
             System.out.printf("[Ans-START] Player %s is now in game %d\n", this.player.getId(), g.getId());
         } catch (Exception e) {
@@ -329,7 +335,8 @@ public class PlayerHandler implements Runnable {
             }
             int d = Integer.parseInt(args[1]);
             if (this.player.moveUP(d)) { // move the player and check if there was a ghost captured
-                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(),
+                        this.player.getScore());
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
@@ -351,7 +358,8 @@ public class PlayerHandler implements Runnable {
             }
             int d = Integer.parseInt(args[1]);
             if (this.player.moveDOWN(d)) { // move the player and check if there was a ghost captured
-                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(),
+                        this.player.getScore());
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
@@ -374,7 +382,8 @@ public class PlayerHandler implements Runnable {
             int d = Integer.parseInt(args[1]);
 
             if (this.player.moveRIGHT(d)) { // move the player and check if there was a ghost captured
-                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(),
+                        this.player.getScore());
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
@@ -396,7 +405,8 @@ public class PlayerHandler implements Runnable {
             }
             int d = Integer.parseInt(args[1]);
             if (this.player.moveLEFT(d)) { // move the player and check if there was a ghost captured
-                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(), this.player.getScore());
+                this.out.printf("MOVEF %03d %03d %04d***", this.player.getRow(), this.player.getCol(),
+                        this.player.getScore());
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
@@ -420,10 +430,12 @@ public class PlayerHandler implements Runnable {
 
             // send GPLYR id x y p***
             this.out.printf("GLIS! %c***", g.getNbPlayers());
-            System.out.printf("[Ans-GLIS?] List of players of game %d sent to player %s\n", g.getId(), this.player.getId());
+            System.out.printf("[Ans-GLIS?] List of players of game %d sent to player %s\n", g.getId(),
+                    this.player.getId());
             g.forEachPlayer(p -> {
                 p.sendGPLYR(this.out);
-                System.out.printf("[Ans-GLIS?] GPLYR %s %04d %04d %04d\n", p.getId(), p.getRow(), p.getCol(), p.getScore());
+                System.out.printf("[Ans-GLIS?] GPLYR %s %04d %04d %04d\n", p.getId(), p.getRow(), p.getCol(),
+                        p.getScore());
             });
 
             System.out.println();
@@ -439,7 +451,8 @@ public class PlayerHandler implements Runnable {
             if (args.length != 1) {
                 throw new Exception("IQUIT request must have 0 arguments");
             }
-            System.out.printf("[Req-IQUIT] Player %s requested to quit the party %d\n", this.player.getId(), this.player.getGame().getId());
+            System.out.printf("[Req-IQUIT] Player %s requested to quit the party %d\n", this.player.getId(),
+                    this.player.getGame().getId());
             Game g = this.player.getGame();
             if (g == null) {
                 throw new Exception("Player is not in a game");
@@ -468,7 +481,8 @@ public class PlayerHandler implements Runnable {
             if (isInvalidmess(args[1])) {
                 throw new Exception("Message must have at least 200 characters and not contain *** and +++");
             }
-            System.out.printf("[Req-MALL?] Player %s requested to send a message to all players of his game\n", this.player.getId());
+            System.out.printf("[Req-MALL?] Player %s requested to send a message to all players of his game\n",
+                    this.player.getId());
 
             // send the message to all players
             String mess = args[1];
@@ -501,7 +515,8 @@ public class PlayerHandler implements Runnable {
 
             String id = args[1];
             String mess = args[2];
-            System.out.printf("[Req-SEND?] Player %s requested to send a message to the player with id=%s\n", this.player.getId(), id);
+            System.out.printf("[Req-SEND?] Player %s requested to send a message to the player with id=%s\n",
+                    this.player.getId(), id);
 
             // send the message to the player
             Player p = this.player.getGame().getPlayer(id);

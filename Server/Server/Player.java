@@ -86,7 +86,9 @@ public class Player {
         w1 = (byte) (w >> 8); // strongest weight byte
         String ipMulticastStr = ipMulticast.getHostAddress();
         String ip = ipMulticastStr + "#".repeat(15 - ipMulticastStr.length());
-        this.out.printf("WELCO %c %c%c %c%c %c %s %04d***", m, h0, h1, w0, w1, f, ip, portMulticast);
+        this.out.printf("WELCO %c %c%c %c%c %c %s %04d***", Byte.toUnsignedInt(m), Byte.toUnsignedInt(h0),
+                Byte.toUnsignedInt(h1), Byte.toUnsignedInt(w0), Byte.toUnsignedInt(w1), Byte.toUnsignedInt(f), ip,
+                portMulticast);
     }
 
     public void sendPOSIT() {
@@ -158,4 +160,3 @@ public class Player {
         return game.getLabyrinth().movePlayerRIGHT(this, d);
     }
 }
-

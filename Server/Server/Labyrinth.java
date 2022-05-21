@@ -7,21 +7,22 @@ import static Server.Utils.sendMessageUDP;
 
 /**
  * Adapted from the code
- * <a href="https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>
+ * <a href=
+ * "https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common">here</a>
  */
 public class Labyrinth implements Runnable {
     public static final int MAX = 150; // todo: add max easy, medium, hard
     public static final int MIN = 12;
     private static final int[][] DIRECTIONS = { // distance of 2 to each side
-            {0, -2}, // north
-            {0, 2}, // south
-            {2, 0}, // east
-            {-2, 0}, // west
+            { 0, -2 }, // north
+            { 0, 2 }, // south
+            { 2, 0 }, // east
+            { -2, 0 }, // west
     };
     private static final Random random = new Random();
     // TODO: make sure rows and cols are < 1000
     private final short height; // number of lines
-    private final short width;  // number of columns
+    private final short width; // number of columns
     private final Game game;
     private final Cell[][] grid;
     private final ArrayList<Ghost> ghosts;
@@ -83,7 +84,8 @@ public class Labyrinth implements Runnable {
                 connect(frontierCell, neighbor);
             }
 
-            // Compute the frontier cells of the chosen frontier cell and add them to the frontier collection
+            // Compute the frontier cells of the chosen frontier cell and add them to the
+            // frontier collection
             frontierCells.addAll(frontierCellsOf(frontierCell));
             // Remove frontier cell from the frontier collection
             frontierCells.remove(frontierCell);
@@ -184,6 +186,7 @@ public class Labyrinth implements Runnable {
         } while (grid[row][col].isWall);
         incrNbPlayers(row, col);
         player.setPosition(row, col);
+        System.out.println("Player " + player.getId() + " placed at " + row + " " + col);
     }
 
     public void moveGhosts(InetAddress ipMulticast, int portMulticast) {
@@ -223,6 +226,7 @@ public class Labyrinth implements Runnable {
     public void run() {
         while (this.game.isRunning()) {
             moveGhosts(this.game.getIpMulticast(), this.game.getPortMulticast());
+            System.out.println("isRunning: " + this.game.isRunning());
         }
     }
 
@@ -251,18 +255,18 @@ public class Labyrinth implements Runnable {
                 System.out.println(m);
             }
         }
-//        for (Ghost ghost : ghosts) {
-//            if (ghost.getRow() == row && ghost.getCol() == col) {
-//                total += ghost.getScore();
-//                ghosts.remove(ghost);
-//                grid[row][col].decrNbGhosts();
-//            }
-//        }
-//        return total;
+        // for (Ghost ghost : ghosts) {
+        // if (ghost.getRow() == row && ghost.getCol() == col) {
+        // total += ghost.getScore();
+        // ghosts.remove(ghost);
+        // grid[row][col].decrNbGhosts();
+        // }
+        // }
+        // return total;
     }
 
     public boolean movePlayerUP(Player player, int d) throws Exception {
-        //get position of the player
+        // get position of the player
         int x = player.getRow();
         int y = player.getCol();
 
@@ -287,7 +291,7 @@ public class Labyrinth implements Runnable {
     }
 
     public boolean movePlayerDOWN(Player player, int d) throws Exception {
-        //get position of the player
+        // get position of the player
         int x = player.getRow();
         int y = player.getCol();
 
@@ -312,7 +316,7 @@ public class Labyrinth implements Runnable {
     }
 
     public boolean movePlayerLEFT(Player player, int d) throws Exception {
-        //get position of the player
+        // get position of the player
         int x = player.getRow();
         int y = player.getCol();
 
@@ -337,7 +341,7 @@ public class Labyrinth implements Runnable {
     }
 
     public boolean movePlayerRIGHT(Player player, int d) throws Exception {
-        //get position of the player
+        // get position of the player
         int x = player.getRow();
         int y = player.getCol();
 
@@ -403,8 +407,10 @@ public class Labyrinth implements Runnable {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             Cell cell = (Cell) o;
             return row == cell.row && column == cell.column;
         }
@@ -415,4 +421,3 @@ public class Labyrinth implements Runnable {
         }
     }
 }
-
