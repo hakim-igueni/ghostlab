@@ -470,8 +470,8 @@ public class PlayerHandler implements Runnable {
 
             // send the message to all players
             String mess = args[1];
-            int port = this.player.getGame().getGameManager().getPortMulticast();
-            InetAddress address = this.player.getGame().getGameManager().getIpMulticast();
+            int port = this.player.getGame().getPortMulticast();
+            InetAddress address = this.player.getGame().getIpMulticast();
             sendMessageUDP(String.format("MESSA %s %s+++", this.player.getId(), mess), address, port);
 
             // send MALL! mess***
