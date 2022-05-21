@@ -1,4 +1,4 @@
-#                                          Rapport du projet
+#                                                           Rapport du projet
 
 ##                                                           "Jeu GHOSTLAB"
 
@@ -34,13 +34,37 @@ Représente un fantôme, elle contient la position du fantôme(numéro de ligne 
 
 ##### La classe Labyrinth:
 
-Elle représente un labyrinthe, cette classe à été adaptée du code dans le lien ci-dessous:
-
-[Labyrinth]: https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common
-
-Elle génère un labyrinthe pour chaque partie en utilisant l’algorithme de Prim, et place un nombre différent de fantômes dans chaque labyrinth, cette classe gère le déplacement des fantômes dans un intervalle de temps bien défini(chaque seconde, un fantôme est déplacé selon sa vitesse) dans le labyrinthe.Elle contient les méthodes qui permettent de déplacer un joueur dans le labyrinthe. 
+Elle représente un labyrinthe, cette classe à été adaptée du code dans le [lien](https://bitbucket.org/c0derepo/prime-algo-maze-generation/src/master/src/common). Elle génère un labyrinthe pour chaque partie en utilisant l’algorithme de Prim, et place un nombre différent de fantômes dans chaque labyrinth, cette classe gère le déplacement des fantômes dans un intervalle de temps bien défini(chaque seconde, un fantôme est déplacé selon sa vitesse) dans le labyrinthe.Elle contient les méthodes qui permettent de déplacer un joueur dans le labyrinthe. 
 
 ##### La classe Utils:
 
 Cette classe permet de vérifier la bonne syntaxe d’une requête et les caractéristiques pour chacun des champs contenus dans les messages .
+
+### Coté Client:
+
+Il a été réparti en 4 fichiers c selon les besoins du joueur dans le jeu: 
+
+##### before_game_functions:
+
+Ce fichier contient l'ensemble des requetes que le joueur peut envoyer avant de commencer une partie (créer une nouvelle partie ou intégrer une partie déja existante) et les réponses reçus de la part du serveur ainsi que leurs traitements (vérification de la syntaxe des messages du serveur).
+
+##### client:
+
+Représente le fichier principal (le joueur), qui contient la fonction main où la connexion avec le serveur est établie grace à la création d'une socketTCP avec celui-ci. Un thread est créé et ecoute en UDP tout message UDP venant du serveur. 
+
+
+
+##### during_game_functions:
+
+Cette partie du client est composé de toutes les requetes (Se déplacer au sein du labyrinthe, avoir des informations sur la partie telle que le nombre de joueurs présents dans la partie, communiquer avec d'autres joueurs de la même partie, Abandonner la partie) qu'un joueur peut envoyer au serveur durant le déroulement du jeu ainsi que les réponses du serveur et leurs traitements. La partie commence lorsque tous les joueurs de celle-ci envoient un START. 
+
+Des Méthodes de traitement ont été implémentées pour avoir un client automatique .
+
+##### utils:
+
+Comporte trois fonctions: l'une permet de générer l'identifiant d'un joueur en resepectant les caractéres alpha numériques, la deuxiéme permet de générer un numéro de port composé de 4 caractéres numériques et la troisiéme fonction permet de compléter les numéros par des 0 pour avoir des numéros codés sur le nombre d'octets spécifié dans le sujet du projet. 
+
+
+
+
 
