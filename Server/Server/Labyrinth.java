@@ -219,6 +219,8 @@ public class Labyrinth implements Runnable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if (!this.game.isRunning())
+                break;
         }
     }
 
