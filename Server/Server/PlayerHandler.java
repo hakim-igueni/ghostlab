@@ -326,6 +326,8 @@ public class PlayerHandler implements Runnable {
     private void treatUPMOVRequest(String[] args) {
         // UPMOV d***
         try {
+            System.out.printf("[Req-UPMOV] Player %s requested to move up with distance %d\n", this.player.getId(),
+                    args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
                 throw new Exception("UPMOV request must have 1 argument: UPMOV d");
@@ -340,6 +342,8 @@ public class PlayerHandler implements Runnable {
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
+            System.out.printf("[Ans-UPMOV] Player %s moved up to position : (%d, %d)\n", this.player.getId(),
+                    this.player.getRow(), this.player.getCol());
         } catch (Exception e) {
             System.out.printf("[Req-UPMOV] Error: %s\n", e.getMessage());
             sendDUNNO();
@@ -349,6 +353,8 @@ public class PlayerHandler implements Runnable {
     private void treatDOMOVRequest(String[] args) {
         // DOMOV d***
         try {
+            System.out.printf("[Req-DOMOV] Player %s requested to move down with distance %d\n", this.player.getId(),
+                    args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
                 throw new Exception("DOMOV request must have 1 argument: DOMOV d");
@@ -363,6 +369,8 @@ public class PlayerHandler implements Runnable {
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
+            System.out.printf("[Ans-DOMOV] Player %s moved down to position : (%d, %d)\n", this.player.getId(),
+                    this.player.getRow(), this.player.getCol());
         } catch (Exception e) {
             System.out.printf("[Req-DOMOV] Error: %s\n", e.getMessage());
             sendDUNNO();
@@ -372,6 +380,8 @@ public class PlayerHandler implements Runnable {
     private void treatRIMOVRequest(String[] args) {
         // RIMOV d***
         try {
+            System.out.printf("[Req-RIMOV] Player %s requested to move right with distance %d\n", this.player.getId(),
+                    args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
                 throw new Exception("RIMOV request must have 1 argument: RIMOV d");
@@ -387,6 +397,8 @@ public class PlayerHandler implements Runnable {
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
+            System.out.printf("[Ans-RIMOV] Player %s moved right to position : (%d, %d)\n", this.player.getId(),
+                    this.player.getRow(), this.player.getCol());
         } catch (Exception e) {
             System.out.printf("[Req-RIMOV] Error: %s\n", e.getMessage());
             sendDUNNO();
@@ -396,6 +408,8 @@ public class PlayerHandler implements Runnable {
     private void treatLEMOVRequest(String[] args) {
         // LEMOV d***
         try {
+            System.out.printf("[Req-LEMOV] Player %s requested to move left with distance %d\n", this.player.getId(),
+                    args[1]);
             // Verify if the request has one argument
             if (args.length != 2) {
                 throw new Exception("LEMOV request must have 1 argument: LEMOV d");
@@ -410,6 +424,8 @@ public class PlayerHandler implements Runnable {
             } else {
                 this.out.printf("MOVE! %03d %03d***", this.player.getRow(), this.player.getCol());
             }
+            System.out.printf("[Ans-LEMOV] Player %s moved left to position : (%d, %d)\n", this.player.getId(),
+                    this.player.getRow(), this.player.getCol());
         } catch (Exception e) {
             System.out.printf("[Req-LEMOV] Error: %s\n", e.getMessage());
             sendDUNNO();
