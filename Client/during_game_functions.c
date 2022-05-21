@@ -130,8 +130,8 @@ void recv_MOVE(int tcpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p)
         // si le joueur a capturé un fantome, on met à jour le nombre de points
         // Le joueur a capturé un fantome
         // On reçoit la suite sous la forme " x y p***"
-        received_bytes = recv(tcpsocket_fd,
-                              buffer, 15, 0);
+        received_bytes += recv(tcpsocket_fd,
+                               buffer + 5, 15, 0);
         if (received_bytes == -1)
         {
             perror("[MOVE] read");
@@ -144,13 +144,15 @@ void recv_MOVE(int tcpsocket_fd, uint16_t *x, uint16_t *y, uint16_t *p)
     {
         // Le joueur n'a pas capturé un fantome
         // On reçoit la suite sous la forme " x y***"
-        received_bytes = recv(tcpsocket_fd,
-                              buffer, 11, 0);
+        received_bytes += recv(tcpsocket_fd,
+                               buffer + 5, 11, 0);
         if (received_bytes == -1)
         {
             perror("[MOVE] read");
             exit(EXIT_FAILURE);
         }
+        printf("[MOVE] Le joueur n'a pas capturé un fantome\n");
+        printf("[MOVE] buffer = %s\n", buffer);
     }
     else
     {
@@ -174,6 +176,7 @@ void send_UPMOV_request(int tcpsocket_fd, char *d, uint16_t *x, uint16_t *y, uin
         perror("[UPMOV] send");
         exit(EXIT_FAILURE);
     }
+    printf("sent_bytes : %d\n", sent_bytes);
     // Recevoir la réponse du serveur sous la forme "MOVE! x y***"
     recv_MOVE(tcpsocket_fd, x, y, p);
 }
