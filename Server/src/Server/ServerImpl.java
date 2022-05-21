@@ -65,7 +65,6 @@ public class ServerImpl {
         } else {
             notStartedGames.remove(game.getId());
         }
-        Game.addAvailableGameId(game.getId());
         System.out.printf("Game %d removed.\n", Byte.toUnsignedInt(game.getId()));
     }
 

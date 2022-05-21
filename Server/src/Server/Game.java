@@ -8,15 +8,12 @@ import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class Game {
-    private static final HashSet<Byte> availableGameIds = new HashSet<>();
+    private static int nbGames = 0;
     private static InetAddress lastGivenMulticastAddress;
     private static int lastGivenMulticastPort;
 
     // this HashSet is used to store the available game ids and reuse them when a game is over
     static {
-        for (int i = 1; i <= 255; i++) {
-            availableGameIds.add((byte) i);
-        }
         try {
             lastGivenMulticastAddress = InetAddress.getByName("225.0.0.0");
             lastGivenMulticastPort = 1024;
@@ -41,16 +38,12 @@ public class Game {
     }
 
     public synchronized static byte nextAvailableGameId() {
-        if (availableGameIds.size() == 0) {
-            throw new RuntimeException("No more game ids available");
-        }
-        byte id = availableGameIds.iterator().next();
-        availableGameIds.remove(id);
+//        if (availableGameIds.size() == 0) {
+//            throw new RuntimeException("No more game ids available");
+//        }
+        byte id = (byte) nbGames;
+        nbGames++;
         return id;
-    }
-
-    public synchronized static void addAvailableGameId(byte id) {
-        availableGameIds.add(id);
     }
 
     public int getMaxScore() {
