@@ -52,6 +52,10 @@ void recv_WELCO(int tcpsocket_fd, int *udpsocket_fd)
     {
         *p = '\0';
     }
+    if (ip[0] == ' ')
+    {
+        stpncpy(ip, ip + 1, 15);
+    }
     uint16_t port = (uint16_t)strtol(buffer + 32, NULL, 10);
 
     printf("WELCO␣m␣h␣w␣f␣ip␣port*** : m=%d h=%d  w=%d  f=%d ip=%s port=%d \n", m, h, w, f, ip, port);
